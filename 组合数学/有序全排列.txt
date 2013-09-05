@@ -1,0 +1,75 @@
+// 求排列src后面的第m个有序全排列，结果为1-n的一个排列
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+
+#define MAX 25
+
+typedef __int64 i64;
+
+using namespace std;
+
+i64 fac[MAX];
+int vec[MAX], ans[MAX], a[MAX], b[MAX], c[MAX];
+bool vis[MAX];
+
+void init() {
+    int i;
+
+    for (fac[0] = i = 1; i < MAX; ++i) {
+        fac[i] = fac[i - 1] * i;
+    }
+}
+
+void code(const int *src, int *dst, int n) {
+    int i, j;
+
+    for (i = n - 2; ~i; --i) {
+        dst[n - i - 2] = 0;
+        for (j = i + 1; j < n; ++j) {
+            dst[n - i - 2] += src[j] < src[i];
+        }
+    }
+}
+
+void decode(const int *src, int *dst, int n) {
+    int i, j, cnt = 0;
+
+    memset(vis, 0, sizeof(vis));
+    for (i = n - 2; ~i; --i) {
+        for (j = 1, cnt = 0; ; ++j, ++cnt) {
+            while (vis[j]) ++j;
+            if (cnt == src[i]) break;
+        }
+        vis[dst[n - i - 2] = j] = true;
+    }
+    for (j = 1; vis[j]; ++j);
+    dst[n - 1] = j;
+}
+
+void convert(i64 src, int *dst, int n) {
+    int i;
+
+    for (i = n - 1; ~i; --i) {
+        dst[i] = src / fac[i + 1];
+        src -= dst[i] * fac[i + 1];
+    }
+}
+
+void add(const int *a, const int *b, int *c, int n) {
+    int i, x = 0;
+
+    for (i = 0; i < n; ++i) {
+        c[i] = (a[i] + b[i] + x) % (i + 2);
+        x = (a[i] + b[i] + x) / (i + 2);
+    }
+}
+
+void permutation(const int *src, i64 m, int *dst, int n) {
+    code(src, a, n);
+    convert(m, b, n - 1);
+    add(a, b, c, n);
+    decode(c, dst, n);
+}

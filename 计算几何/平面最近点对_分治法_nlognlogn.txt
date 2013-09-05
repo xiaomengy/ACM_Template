@@ -1,0 +1,48 @@
+// 求平面最近点对_分治法
+// 复杂度 nlognlogn, 调用 solve 前需要 sort(p, p + n, cmpx);
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <cmath>
+#include <algorithm>
+
+#define MAX 100100
+
+using namespace std;
+
+struct Point {
+    double x, y;
+} p[MAX], q[MAX];
+
+inline bool cmpx(const Point &a, const Point &b) {
+    return a.x < b.x;
+}
+
+inline bool cmpy(const Point &a, const Point &b) {
+    return a.y < b.y;
+}
+
+inline double dis(const Point &a, const Point &b) {
+    return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
+}
+
+double solve(int l, int r) {
+    int mid, i, j, tot = 0;
+    double ret;
+
+    if (l + 1 == r) return dis(p[l], p[r]);
+    if (l + 2 == r) return min(min(dis(p[l], p[l + 1]), dis(p[l + 1], p[r])), dis(p[l], p[r]));
+    mid = (l + r) >> 1;
+    ret = min(solve(l, mid), solve(mid + 1, r));
+    for (i = mid; i >= l && p[mid + 1].x - p[i].x < ret; --i) q[tot++] = p[i];
+    for (i = mid + 1; i <= r && p[i].x - p[mid].x < ret; ++i) q[tot++] = p[i];
+    sort(q, q + tot, cmpy);
+    for (i = 0; i < tot; ++i) {
+        for (j = i + 1; j < tot && q[j].y - q[i].y < ret; ++j) {
+            ret = min(ret, dis(q[i], q[j]));
+        }
+    }
+
+    return ret;
+}

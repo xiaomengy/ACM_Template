@@ -1,0 +1,62 @@
+//prim + heap优化，若图不连通返回-1
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <utility>
+#include <queue>
+
+#define MAXV 110
+#define MAXE 10010
+#define INF 1000000000
+
+using namespace std;
+
+struct Edge {
+    int ed, val, next;
+} edge[MAXE];
+
+int head[MAXV], nEdge;
+int dis[MAXV];
+bool vis[MAXV];
+
+priority_queue< pair<int, int> > que;
+
+void init() {
+    memset(head, -1, sizeof(head));
+    nEdge = 0;
+}
+
+void addEdge(int a, int b, int v) {
+    edge[nEdge].ed = b;
+    edge[nEdge].val = v;
+    edge[nEdge].next = head[a];
+    head[a] = nEdge++;
+    edge[nEdge].ed = a;
+    edge[nEdge].val = v;
+    edge[nEdge].next = head[b];
+    head[b] = nEdge++;
+}
+
+int prim(int v) {
+    int ret = 0, cnt = 0, x, y, i;
+
+	fill(dis, dis + v, INF);
+    memset(vis, 0, sizeof(vis));
+	while (!que.empty()) que.pop();
+    que.push(make_pair(dis[0] = 0, 0));
+    while (!que.empty()) {
+        x = que.top().second; que.pop();
+        if (vis[x]) continue;
+        vis[x] = true; ret += dis[x]; ++cnt;
+        for (i = head[x]; ~i; i = edge[i].next) {
+            if (!vis[y = edge[i].ed] && dis[y] > edge[i].val) {
+                que.push(make_pair(-(dis[y] = edge[i].val), y));
+            }
+        }
+    }
+
+    return cnt == v ? ret : -1;
+}
+

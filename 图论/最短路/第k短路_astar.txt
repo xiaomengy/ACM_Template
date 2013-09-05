@@ -1,0 +1,93 @@
+// 求第k短路，先 spfa 预处理然后 astar 即可
+// 此处为有向图，无向图 spfa和 astar 使用同一张图即可
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <queue>
+
+#define MAXV 1010
+#define MAXE 100010
+#define INF 1000000000
+
+using namespace std;
+
+class Graph {
+public:
+    struct Edge {
+        int ed, val, next;
+    } edge[MAXE];
+
+    int head[MAXV], nv, nEdge;
+
+    void init(const int v) {
+        memset(head, -1, sizeof(head));
+        nv = v;
+        nEdge = 0;
+    }
+
+    void addEdge(int a, int b, int val) {
+        edge[nEdge].ed = b;
+        edge[nEdge].val = val;
+        edge[nEdge].next = head[a];
+        head[a] = nEdge++;
+    }
+} ga, gb;
+
+int que[MAXV * MAXV], front, tail;
+int dis[MAXV];
+bool vis[MAXV];
+
+struct Node {
+    int v, g, f;
+
+    Node() {}
+    Node(int _v, int _g, int _f) : v(_v), g(_g), f(_f) {}
+    bool operator <(const Node &p) const {
+        return p.f < f;
+    }
+};
+
+priority_queue<Node> myQue;
+
+void spfa(const Graph &g, int src) {
+    int i, cur, p;
+
+    for (i = 0; i < g.nv; ++i) dis[i] = INF;
+    memset(vis, 0, sizeof(vis));
+    front = tail = 0;
+
+    dis[src] = 0;
+    vis[que[tail++] = src] = true;
+    while (front < tail) {
+        vis[cur = que[front++]] = false;
+        for (i = g.head[cur]; ~i; i = g.edge[i].next) {
+            if (dis[p = g.edge[i].ed] > dis[cur] + g.edge[i].val) {
+                dis[p] = dis[cur] + g.edge[i].val;
+                if (!vis[p]) vis[que[tail++] = p] = true;
+            }
+        }
+    }
+}
+
+int astar(const Graph &g, int src, int dst, int k) {
+    int i, v, cnt = 0;
+    Node cur;
+
+    while (!myQue.empty()) myQue.pop();
+    myQue.push(Node(src, 0, dis[src]));
+    while (!myQue.empty()) {
+        cur = myQue.top();
+        myQue.pop();
+        if (cur.v == dst) {
+            if ((++cnt) == k) return cur.f;
+        }
+        for (i = g.head[cur.v]; ~i; i = g.edge[i].next) {
+            v = g.edge[i].ed;
+            myQue.push(Node(v, cur.g + g.edge[i].val, cur.g + g.edge[i].val + dis[v]));
+        }
+    }
+
+    return -1;
+}
+

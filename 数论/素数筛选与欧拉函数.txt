@@ -1,0 +1,41 @@
+#include <stdio.h>
+#include <string.h>
+
+#define MAX 100010
+
+int a[MAX], p[MAX], phi[MAX];
+
+int prime() {
+    int i, j, n = 0;
+
+    phi[1] = 1;
+    for (i = 2; i < MAX; ++i) {
+        if (!a[i]) {
+            a[i] = p[n++] = i; phi[i] = i - 1;
+        }
+        for (j = 0; j < n && i * p[j] < MAX; ++j) {
+            a[i * p[j]] = p[j];
+            if (i % p[j]) phi[i * p[j]] = phi[i] * (p[j] - 1);
+            else {
+                phi[i * p[j]] = phi[i] * p[j];
+                break;
+            }
+        }
+    }
+	
+	return n;
+}
+
+int eula(int n) {
+	int i, ret = 1;
+	
+	for (i = 0; p[i] * p[i] <= n; ++i) {
+		if (!(n % p[i])) {
+			ret *= p[i] - 1; 
+			for (n /= p[i]; !(n % p[i]); n /= p[i]) ret *= p[i];
+		}
+	}
+	if (n > 1) ret *= n - 1;
+	
+	return ret;
+}

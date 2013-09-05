@@ -1,0 +1,133 @@
+// K度限制最小生成树，sp为K度限制点
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <utility>
+#include <queue>
+
+#define MAXV 110
+#define MAXE 10010
+#define INF 1000000000
+
+using namespace std;
+
+struct Edge {
+    int ed, val, next;
+} edge[MAXE];
+
+int head[MAXV], nEdge;
+int dis[MAXV], col[MAXV], path[MAXV], h[MAXV], mv[MAXV], his[MAXV];
+bool vis[MAXE];
+
+priority_queue< pair<int, int> > myQue;
+
+void init() {
+    memset(head, -1, sizeof(head));
+    nEdge = 0;
+}
+
+void addEdge(int a, int b, int v) {
+    edge[nEdge].ed = b;
+    edge[nEdge].val = v;
+    edge[nEdge].next = head[a];
+    head[a] = nEdge++;
+    edge[nEdge].ed = a;
+    edge[nEdge].val = v;
+    edge[nEdge].next = head[b];
+    head[b] = nEdge++;
+}
+
+int prim(int v, int src, int sp, int cnt) {
+    int ret = 0, cur, p, i;
+
+    while (!myQue.empty()) myQue.pop();
+    for (i = 0; i < v; ++i) dis[i] = INF;
+
+    dis[src] = 0;
+    myQue.push(make_pair(0, src));
+    while (!myQue.empty()) {
+        cur = myQue.top().second;
+        myQue.pop();
+        if (~col[cur]) continue;
+        col[cur] = cnt;
+        vis[path[cur]] = vis[path[cur] ^ 1] = true;
+        ret += dis[cur];
+        for (i = head[cur]; ~i; i = edge[i].next) {
+            if (col[p = edge[i].ed] == -1 && p != sp && dis[p] > edge[i].val) {
+                dis[p] = edge[i].val;
+                path[p] = i;
+                myQue.push(make_pair(-dis[p], p));
+            }
+        }
+    }
+
+    return ret;
+}
+
+void dfs(int u, int pre, int sp) {
+    int i, v;
+
+    for (i = head[u]; ~i; i = edge[i].next) {
+        if (vis[i] && (v = edge[i].ed) != pre && v != sp) {
+            mv[v] = ((~mv[u]) &&  edge[mv[u]].val > edge[i].val) ? mv[u] : i;
+            dfs(v, u, sp);
+        }
+    }
+}
+
+int solve(int v, int sp, int k) {
+    int i, j, p, cnt = 0, sum = 0, ans, me, mc;
+
+    memset(col, -1, sizeof(col));
+    memset(vis, 0, sizeof(vis));
+    for (i = 0; i < v; ++i) {
+        if (i != sp && col[i] == -1) {
+            sum += prim(v, i, sp, cnt++);
+        }
+    }
+    if (cnt > k) return -1;
+
+    for (i = 0; i < cnt; ++i) dis[i] = INF;
+    for (i = head[sp]; ~i; i = edge[i].next) {
+        if (dis[col[p = edge[i].ed]] > edge[i].val) {
+            dis[col[p]] = edge[i].val;
+            his[col[p]] = i;
+        }
+    }
+
+    h[cnt] = sum;
+    for (i = 0; i < cnt; ++i) {
+        h[cnt] += dis[i];
+        vis[his[i]] = vis[his[i] ^ 1] = true;
+    }
+
+    memset(mv, 0, sizeof(mv));
+    for (i = head[sp]; ~i; i = edge[i].next) {
+        if (vis[i]) {
+            mv[p = edge[i].ed] = -1;
+            dfs(p, sp, sp);
+        }
+    }
+
+    ans = h[cnt];
+    for (i = cnt + 1; i <= k; ++i) {
+        mc = INF;
+        for (j = head[sp]; ~j; j = edge[j].next) {
+            if (!vis[j] && (~mv[p = edge[j].ed]) && mc > edge[j].val - mv[p]) {
+                mc = edge[j].val - edge[mv[p]].val;
+                me = j;
+            }
+        }
+        if (mc == INF) break;
+
+        h[i] = h[i - 1] + edge[me].val - edge[mv[p = edge[me].ed]].val;
+        ans = min(ans, h[i]);
+        vis[me] = vis[me ^ 1] = true;
+        vis[mv[p]] = vis[mv[p] ^ 1] = false;
+        mv[p] = -1;
+        dfs(p, sp, sp);
+    }
+
+    return ans;
+}

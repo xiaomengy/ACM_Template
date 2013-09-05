@@ -1,0 +1,111 @@
+// SBT 模板，静态实现，带有内存回收
+// 使用前需要重载 < 运算符, select 和 rank 均从1开始
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAX 1000100
+
+using namespace std;
+
+template<typename T> class SBTree {
+public:
+    SBTree() {
+        root = nil = new Node();
+        nil->ch[0] = nil->ch[1] = nil;
+        nil->sz = 0;
+        tot = top = 0;
+    }
+    ~SBTree() {}
+
+    void clear() {
+        root = nil; tot = top = 0;
+    }
+    int size() { return root->sz; }
+    bool empty() { return root == nil; }
+    void insert(const T &it) { insert(root, it); }
+    void erase(const T &it) { erase(root, it); }
+    bool find(const T &it) { return find(root, it); }
+    const T &minItem() { return minMax(root, 0); }
+    const T &maxItem() { return minMax(root, 1); }
+    const T &select(int k) { return select(root, k); }
+    int rank(const T &it) { return rank(root, it); }
+
+private:
+    struct Node {
+        T key;
+        int sz;
+        Node *ch[2];
+    } v[MAX], *stk[MAX], *root, *nil;
+
+    int tot, top;
+
+    void rotate(Node *&x, int d) {
+        Node *y = x->ch[d ^ 1];
+        x->ch[d ^ 1] = y->ch[d]; y->ch[d] = x;
+        y->sz = x->sz; x->sz = x->ch[0]->sz + x->ch[1]->sz + 1;
+        x = y;
+    }
+
+    void maintain(Node *&x, int d) {
+        if (x == nil) return;
+        if (x->ch[d]->sz < x->ch[d ^ 1]->ch[d ^ 1]->sz) rotate(x, d);
+        else if (x->ch[d]->sz < x->ch[d ^ 1]->ch[d]->sz) {
+            rotate(x->ch[d ^ 1], d ^ 1); rotate(x, d);
+        } else {
+            return;
+        }
+        maintain(x->ch[0], 1); maintain(x->ch[1], 0);
+        maintain(x, 1); maintain(x, 0);
+    }
+
+    void insert(Node *&x, const T &it) {
+        if (x == nil) {
+            x = top ? stk[top--] : v + tot++;
+            x->key = it; x->sz = 1;
+            x->ch[0] = x->ch[1] = nil;
+        } else {
+            ++x->sz;
+            insert(x->ch[x->key < it], it);
+            maintain(x, it < x->key);
+        }
+    }
+
+    void erase(Node *&x, const T &it) {
+        Node *p;
+        if (x == nil) return;
+        --x->sz;
+        if (it < x->key) erase(x->ch[0], it);
+        else if (x->key < it) erase(x->ch[1], it);
+        else {
+            if (x->ch[1] == nil) {
+                stk[++top] = x; x = x->ch[0];
+            } else {
+                for (p = x->ch[1]; p->ch[0] != nil; p = p->ch[0]);
+                erase(x->ch[1], x->key = p->key);
+            }
+        }
+    }
+
+    bool find(const Node *x, const T &it) {
+        if (x == nil || !(it < x->key || x->key < it)) return x != nil;
+        return find(x->ch[x->key < it], it);
+    }
+
+    const T &minMax(const Node *x, int d) {
+        return x->ch[d] == nil ? x->key : minMax(x->ch[d], d);
+    }
+
+    const T &select(const Node *x, int k) {
+        if (x == nil || k == x->ch[0]->sz + 1) return x->key;
+        return select(x->ch[x->ch[0]->sz + 1 < k], x->ch[0]->sz + 1 < k ? k - x->ch[0]->sz - 1 : k);
+    }
+
+    int rank(const Node *x, const T &it) {
+        if (x == nil) return 1;
+        if (it < x->key) return rank(x->ch[0], it);
+        if (x->key < it) return rank(x->ch[1], it) + x->ch[0]->sz + 1;
+        return x->ch[0]->sz + 1;
+    }
+};

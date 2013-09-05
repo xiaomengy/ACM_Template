@@ -1,0 +1,69 @@
+//求无向图边双连通分量，可以处理重边
+//bid[i]代表第i个点所在b边双连通分量, tag[i] == true 表示 edge[i] 为桥边, 正反向边均有标记
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAXV 1010
+#define MAXE 100010
+
+using namespace std;
+
+struct Edge {
+    int ed, next;
+} edge[MAXE];
+
+int head[MAXV], nEdge;
+int dfn[MAXV], low[MAXV], idx;
+int bid[MAXV], bcnt, stk[MAXV], top;
+bool tag[MAXE];
+
+void init() {
+    memset(head, -1, sizeof(head));
+    nEdge = 0;
+}
+
+void addEdge(int a, int b) {
+    edge[nEdge].ed = b;
+    edge[nEdge].next = head[a];
+    head[a] = nEdge++;
+    edge[nEdge].ed = a;
+    edge[nEdge].next = head[b];
+    head[b] = nEdge++;
+}
+
+void tarjan(int x, int p) {
+    int i, y;
+
+    dfn[x] = low[x] = idx++;
+    for (i = head[stk[++top] = x]; ~i; i = edge[i].next) {
+        if ((i | 1) ^ (p | 1)) {
+            if (~dfn[y = edge[i].ed]) low[x] = min(low[x], dfn[y]);
+            else {
+                tarjan(y, i);
+                low[x] = min(low[x], low[y]);
+                if (dfn[x] < low[y]) tag[i] = tag[i ^ 1] = true;
+            }
+        }
+    }
+    if (dfn[x] == low[x]) {
+        do {
+            bid[y = stk[top--]] = bcnt;
+        } while (y != x);
+        ++bcnt;
+    }
+}
+
+void bcc(int v) {
+    int i;
+
+    top = bcnt = idx = 0;
+    memset(dfn, -1, sizeof(dfn));
+    memset(tag, 0, sizeof(tag));
+    for (i = 0; i < v; ++i) {
+        if (dfn[i] == -1) tarjan(i, -1);
+    }
+}
+
+

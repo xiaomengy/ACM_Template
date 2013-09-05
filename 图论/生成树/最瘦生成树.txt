@@ -1,0 +1,66 @@
+// POJ3522
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+
+#define MAXV 110
+#define MAXE 10010
+#define INF 1000000000
+#define MIN(x, y) (x < y ? x : y)
+
+using namespace std;
+
+struct Edge {
+    int u, v, len;
+} edge[MAXE];
+
+int uset[MAXV];
+
+bool cmp(const Edge &a, const Edge &b) {
+    return a.len < b.len;
+}
+
+int root(int a) {
+    int i, j, tmp;
+
+    for (i = a; ~uset[i]; i = uset[i]);
+    for (j = a; j != i; j = tmp) {
+        tmp = uset[j]; uset[j] = i;
+    }
+
+    return i;
+}
+
+int kruskal(int v, int e, int start) {
+    int i, ra, rb, cnt = 0;
+
+    memset(uset, -1, sizeof(uset));
+    for (i = start; i < e; ++i) {
+        ra = root(edge[i].u); rb = root(edge[i].v);
+        if (ra != rb) {
+            ++cnt; uset[ra] = rb;
+            if (cnt == v - 1) return i;
+        }
+    }
+
+    return -1;
+}
+
+int main() {
+    int v, e, i, ret, p;
+
+    while (scanf("%d %d", &v, &e) && (v || e)) {
+        for (i = 0; i < e; ++i) scanf("%d %d %d", &edge[i].u, &edge[i].v, &edge[i].len);
+        sort(edge, edge + e, cmp);
+        ret = INF;
+        for (i = 0; i + v - 1 <= e; ++i) {
+            p = kruskal(v, e, i);
+            if (p >= 0) ret = MIN(ret, edge[p].len - edge[i].len);
+        }
+        printf("%d\n", ret == INF ? -1 : ret);
+    }
+
+    return 0;
+}

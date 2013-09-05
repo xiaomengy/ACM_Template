@@ -1,0 +1,62 @@
+// 判定点是否在凸多边形内，含在凸多边形边上
+// 时间复杂度O(logn)，要求多边形按逆时针顺序给出；若顺时针，则将isRight改为isLeft即可
+// 此方法可以扩展至星形多边形，中心点需要选定为星形中心
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <cmath>
+
+#define MAX 100010
+#define ZERO(x) (fabs(x) < eps)
+
+using namespace std;
+
+const double eps = 1e-8;
+
+struct Point {
+    double x, y;
+
+    Point() {}
+    Point(double _x, double _y) : x(_x), y(_y) {}
+
+    Point operator -(const Point &p) const {
+        return Point(x - p.x, y - p.y);
+    }
+
+    double dotMul(const Point &p) const {
+        return x * p.x + y * p.y;
+    }
+
+    double xMul(const Point &p) const {
+        return x * p.y - y * p.x;
+    }
+} p[MAX];
+
+bool isRight(const Point &x, const Point &u, const Point &v) {
+    return (x - v).xMul(x - u) > 0;
+}
+
+bool inLine(const Point &x, const Point &u, const Point &v) {
+    return ZERO((x - u).xMul(x - v));
+}
+
+bool inSeg(const Point &x, const Point &u, const Point &v) {
+    return ZERO((x - u).xMul(x - v)) && (x - u).dotMul(x - v) <= 0;
+}
+
+bool inPolygon(const Point &x, const Point *p, int n) {
+    int i, low = 0, high = n - 1, mid, pos;
+    Point cen((p[n - 1].x + p[0].x) / 2, (p[n - 1].y + p[0].y) / 2);
+
+    if (isRight(x, p[n - 1], p[0])) return false;
+    if (inLine(x, p[n - 1], p[0])) return inSeg(x, p[n - 1], p[0]);
+
+    while (low <= high) {
+        mid = (low + high) >> 1;
+        if (isRight(x, cen, p[mid])) high = mid - 1;
+        else low = (pos = mid) + 1;
+    }
+
+    return !isRight(x, p[pos], p[pos + 1]);
+}

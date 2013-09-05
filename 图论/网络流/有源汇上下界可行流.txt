@@ -1,0 +1,97 @@
+// 求有源汇上下界可行流
+// st[i]记录从i出发的流下界之和，ed[i]记录到达i的流的下界之和
+// 使用前需先init(), canFlow 返回可行流是否存在
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAXV 1010
+#define MAXE 100010
+#define INF 1000000000
+
+using namespace std;
+
+struct Edge {
+    int ed, flow, next;
+} edge[MAXE];
+
+int head[MAXV], nEdge;
+int d[MAXV], pre[MAXV], path[MAXV], his[MAXV], cur[MAXV], vh[MAXV];
+int st[MAXV], ed[MAXV];
+
+void init() {
+    memset(head, -1, sizeof(head));
+    memset(st, 0, sizeof(st));
+    memset(ed, 0, sizeof(ed));
+    nEdge = 0;
+}
+
+void addEdge(int a, int b, int flow) {
+    edge[nEdge].ed = b;
+    edge[nEdge].flow = flow;
+    edge[nEdge].next = head[a];
+    head[a] = nEdge++;
+    edge[nEdge].ed = a;
+    edge[nEdge].flow = 0;
+    edge[nEdge].next = head[b];
+    head[b] = nEdge++;
+}
+
+void addFlow(int u, int v, int low, int high) {
+    addEdge(u, v, high - low);
+    st[u] += low; ed[v] += low;
+}
+
+int sap(int v, int src, int dst) {
+    int x, y, i, m, nowFlow = INF, totalFlow = 0;
+    bool flag;
+
+    memset(d, 0, sizeof(d));
+    memset(vh, 0, sizeof(vh));
+    memcpy(cur, head, sizeof(cur));
+
+    for (vh[0] = v, x = src; d[src] < v;) {
+        his[x] = nowFlow; flag = false;
+        for (i = cur[x]; ~i; i = edge[i].next) {
+            if (edge[i].flow && d[x] == d[y = edge[i].ed] + 1) {
+                flag = true;
+                nowFlow = min(nowFlow, edge[i].flow);
+                pre[y] = x; path[y] = cur[x] = i;
+                if ((x = y) == dst) {
+                    for (totalFlow += nowFlow; x != src; x = pre[x]) {
+                        edge[path[x]].flow -= nowFlow;
+                        edge[path[x] ^ 1].flow += nowFlow;
+                    }
+                    nowFlow = INF;
+                }
+                break;
+            }
+        }
+        if (!flag) {
+            for (m = v - 1, i = cur[x] = head[x]; ~i; i = edge[i].next) {
+                if (edge[i].flow && d[y = edge[i].ed] < m) {
+                    m = d[y]; cur[x] = i;
+                }
+            }
+            if (!(--vh[d[x]])) break;
+            ++vh[d[x] = m + 1];
+            if (x != src) nowFlow = his[x = pre[x]];
+        }
+    }
+
+    return totalFlow;
+}
+
+bool canFlow(int n, int src, int dst) {
+    int i, v = n + 2, x = n, y = n + 1, sum = 0;
+
+    addEdge(dst, src, INF);
+    for (i = 0; i < n; ++i) {
+        addEdge(i, x, st[i]);
+        addEdge(y, i, ed[i]);
+        sum += st[i];
+    }
+
+    return sap(v, y, x) == sum;
+}

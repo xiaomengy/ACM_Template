@@ -1,0 +1,31 @@
+// 求n的二进制表示中1的个数
+
+// 直接求算法(32位整数的话修改相应M1,M2,M3至32位即可)
+
+#define M1 0333333333333333333333LL
+#define M2 0111111111111111111111LL
+#define M3 0307070707070707070707LL
+
+int count(i64 n) {
+    i64 tmp = n - ((n >> 1) & M1) - ((n >> 2) & M2);
+    return ((tmp + (tmp >> 3)) & M3) % 63;
+}
+
+// 查表法(32位整形的话返回 table[p[0]] + table[p[1]] 即可)
+
+#define MAXN 65536
+
+int table[MAXN]
+
+void init() {
+    int i;
+
+    for (i = 0; i < MAXN; ++i) {
+        table[i] = (i & 1) + table[i >> 1];
+    }
+}
+
+int count(i64 n) {
+    unsigned short *p = (unsigned short *)&n;
+    return table[p[0]] + table[p[1]] + table[p[2]] + table[p[3]];
+}

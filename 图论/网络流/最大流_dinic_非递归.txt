@@ -1,0 +1,86 @@
+//dinic算法求最大流，用邻接表
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAXV 1010
+#define MAXE 100010
+#define INF 1000000000
+
+using namespace std;
+
+struct Edge {
+    int u, v, flow, next;
+} edge[MAXE];
+
+int head[MAXV], nEdge;
+int dis[MAXV], cur[MAXV];
+
+int que[MAXV], front, tail;
+int stk[MAXV], top;
+
+void init() {
+    memset(head, -1, sizeof(head));
+    nEdge = 0;
+}
+
+void addEdge(int a, int b, int flow) {
+    edge[nEdge].u = a; edge[nEdge].v = b;
+    edge[nEdge].flow = flow;
+    edge[nEdge].next = head[a];
+    head[a] = nEdge++;
+    edge[nEdge].u = b; edge[nEdge].v = a;
+    edge[nEdge].flow = 0;
+    edge[nEdge].next = head[b];
+    head[b]= nEdge++;
+}
+
+bool bfs(int src, int dst) {
+    int i, x, y;
+
+    memset(dis, -1, sizeof(dis));
+    front = tail = 0;
+    dis[que[tail++] = src] = 0;
+    while (front < tail) {
+        for (i = head[x = que[front++]]; ~i; i = edge[i].next) {
+            if (edge[i].flow && dis[y = edge[i].v] == -1) {
+                dis[que[tail++] = y] = dis[x] + 1;
+                if (y == dst) return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+int dinic(int v, int src, int dst) {
+    int i, x = src, y, nowFlow, totalFlow = 0;
+
+    while (bfs(src, dst)) {
+        for (i = top = 0; i < v; ++i) cur[i] = head[i];
+        while (1) {
+            if (x == dst) {
+                for (nowFlow = INF, i = 0; i < top; ++i) {
+                    if (edge[stk[i]].flow < nowFlow) nowFlow = edge[stk[y = i]].flow;
+                }
+                for (totalFlow += nowFlow, i = 0; i < top; ++i) {
+                    edge[stk[i]].flow -= nowFlow;
+                    edge[stk[i] ^ 1].flow += nowFlow;
+                }
+                x = edge[stk[top = y]].u;
+            }
+            for(i = cur[x]; ~i; i = edge[i].next) {
+                if (edge[i].flow && dis[edge[i].v] == dis[x] + 1) break;
+            }
+            if (~(cur[x] = i)) x = edge[stk[top++] = i].v;
+            else {
+                if (!top) break;
+                dis[x] = -1; x = edge[stk[--top]].u;
+            }
+        }
+    }
+
+    return totalFlow;
+}
+

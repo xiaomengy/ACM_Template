@@ -1,0 +1,50 @@
+// zkw线段树_区间增减区间最值
+// 节点记录与父节点差分，更新节点子树全部更新
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAX 0x100000
+#define INF 0x3F3F3F3F
+
+using namespace std;
+
+int a[MAX], minv[MAX], M;
+
+inline void pushUp(int x) {
+    int k = min(minv[x << 1], minv[(x << 1) | 1]);
+    minv[x << 1] -= k; minv[(x << 1) | 1] -= k; minv[x] += k;
+}
+
+void build(const int *a, int n) {
+    int i;
+    for (M = 1; M < n + 2; M <<= 1);
+    memset(minv, 0, sizeof(minv));
+    memset(minv + M, 0x3F, M * sizeof(minv[0]));
+    for (i = 1; i <= n; ++i) minv[i | M] = a[i];
+    for (i = M - 1; i; --i) pushUp(i);
+}
+
+void update(int l, int r, int val) {
+    for (l = (l | M) - 1, r = (r | M) + 1; l ^ r ^ 1; l >>= 1, r >>= 1) {
+        if (~l & 1) minv[l ^ 1] += val;
+        if ( r & 1) minv[r ^ 1] += val;
+        pushUp(l >> 1); pushUp(r >> 1);
+    }
+    for (l >>= 1; l; l >>= 1) pushUp(l);
+}
+
+int query(int l, int r) {
+    int lans = INF, rans = INF, ans;
+
+    for (l = (l | M) - 1, r = (r | M) + 1; l ^ r ^ 1; l >>= 1, r >>= 1) {
+        lans += minv[l]; rans += minv[r];
+        if (~l & 1) lans = min(lans, minv[l ^ 1]);
+        if ( r & 1) rans = min(rans, minv[r ^ 1]);
+    }
+    ans = min(lans + minv[l], rans + minv[r]);
+    for (l >>= 1; l; l >>= 1) ans += minv[l];
+
+    return ans;
+}

@@ -1,0 +1,91 @@
+// LCA tarjan 离线算法，O(n) - O(1)，此处为无向树
+// ans[i][0], ans[i][1], ans[i][2] 分别表示第i次查询的 u, v, lca(u, v)
+// 调用tarjan之前需清空 vis 数组
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAXV 40010
+#define MAXE 100010
+#define MAXQ 210
+
+using namespace std;
+
+struct Edge {
+    int ed, len, next;
+} edge[MAXE];
+
+int head[MAXV], nEdge;
+
+struct Query {
+    int ed, id, next;
+} query[MAXQ];
+
+int qst[MAXV], tot;
+
+bool vis[MAXV];
+int pre[MAXV], ancestor[MAXV];
+int ans[MAXV][3];
+
+void init() {
+    memset(head, -1, sizeof(head));
+    memset(qst, -1, sizeof(qst));
+    nEdge = tot = 0;
+}
+
+void addEdge(int a, int b) {
+    edge[nEdge].ed = b;
+    edge[nEdge].next = head[a];
+    head[a] = nEdge++;
+    edge[nEdge].ed = a;
+    edge[nEdge].next = head[b];
+    head[b] = nEdge++;
+}
+
+void addQuery(int a, int b, int id) {
+    query[tot].ed = b;
+    query[tot].id = id;
+    query[tot].next = qst[a];
+    qst[a] = tot++;
+}
+
+int root(int a) {
+    int r, i, t;
+
+    for (r = a; ~pre[r]; r = pre[r]);
+    for (i = a; i != r; i = t) {
+        t = pre[i]; pre[i] = r;
+    }
+
+    return r;
+}
+
+bool combine(int a, int b) {
+    int ra = root(a), rb = root(b);
+    if (ra != rb) {
+        pre[ra] = rb;
+        return true;
+    }
+    return false;
+}
+
+void tarjan(int u) {
+    int v, i;
+
+    vis[u] = true; pre[u] = -1;
+    ancestor[root(u)] = u;
+    for (i = head[u]; ~i; i = edge[i].next) {
+        if (!vis[v = edge[i].ed]) {
+            tarjan(v);
+            combine(u, v);
+            ancestor[root(u)] = u;
+        }
+    }
+    for (i = qst[u]; ~i; i = query[i].next) {
+        if (vis[v = query[i].ed]) {
+            ans[query[i].id][2] = ancestor[root(v)];
+        }
+    }
+}
+

@@ -1,0 +1,41 @@
+// 扩展kmp算法
+// next[i] 表示 p + i 与 p 匹配最大长度
+// ext[i] 表示 t + i 与 p 匹配最大长度
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAXT 1000100
+#define MAXP 10010
+
+using namespace std;
+
+char t[MAXT], p[MAXP];
+int ext[MAXT], next[MAXP];
+
+void getNext(const char *p, int *next) {
+    int l = 1, r = -1, i, j;
+
+    for (next[0] = 0, i = 1; p[i]; ++i) {
+        if (i + next[i - l] - 1 < r) next[i] = next[i - l];
+        else {
+            for (j = max(r - i + 1, 0); p[i + j] && p[i + j] == p[j]; ++j);
+            next[i] = j; l = i; r = i + j - 1;
+        }
+    }
+    next[0] = i;
+}
+
+void extKmp(const char *p, const char *t, int *next, int *ext) {
+    int l = 0, r = -1, i, j;
+
+    getNext(p, next);
+    for (next[0] = i = 0; t[i]; ++i) {
+        if (i + next[i - l] - 1 < r) ext[i] = next[i - l];
+        else {
+            for (j = max(r - i + 1, 0); t[i + j] && p[j] && t[i + j] == p[j]; ++j);
+            ext[i] = j; l = i; r = i + j - 1;
+        }
+    }
+}

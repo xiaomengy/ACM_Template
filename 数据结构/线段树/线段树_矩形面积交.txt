@@ -1,0 +1,105 @@
+// 线段树_矩形面积交，使用前需要先 tot = 0 初始化
+// 此处为相交超过1次的面积
+// 注意面积为0的矩形不能加入
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <cmath>
+#include <algorithm>
+
+#define MAX 2010
+#define LC(x) ((x) << 1)
+#define RC(x) (((x) << 1) | 1)
+#define AVG(x, y) (((x) & (y)) + (((x) ^ (y)) >> 1))
+#define PAR int x, int l, int r
+#define LL LC(x), l, mid
+#define RR RC(x), mid, r
+#define EQ(x, y) (fabs((x) - (y)) < eps)
+
+using namespace std;
+
+using namespace std;
+
+const double eps = 1e-8;
+
+struct Seg {
+    double x, y1, y2;
+    int val;
+} seg[MAX << 1];
+
+struct SegTree {
+    int cov;
+    double sum[2];
+} st[MAX << 2];
+
+double y[MAX << 2];
+int tot;
+
+bool cmp(const Seg &a, const Seg &b) {
+    return EQ(a.x, b.x) ? a.val > b.val : a.x < b.x;
+}
+
+void addRec(double x1, double y1, double x2, double y2) {
+    seg[tot].x = x1; seg[tot].y1 = y1; seg[tot].y2 = y2; seg[tot].val = 1; y[tot++] = y1;
+    seg[tot].x = x2; seg[tot].y1 = y1; seg[tot].y2 = y2; seg[tot].val = -1; y[tot++] = y2;
+}
+
+void pushUp(PAR) {
+    if (st[x].cov > 1) {
+        st[x].sum[0] = st[x].sum[1] = y[r] - y[l];
+    } else if (st[x].cov == 1) {
+        st[x].sum[0] = y[r] - y[l];
+        st[x].sum[1] = (l + 1 == r) ? 0 : st[LC(x)].sum[0] + st[RC(x)].sum[0];
+    } else {
+        st[x].sum[0] = (l + 1 == r) ? 0 : st[LC(x)].sum[0] + st[RC(x)].sum[0];
+        st[x].sum[1] = (l + 1 == r) ? 0 : st[LC(x)].sum[1] + st[RC(x)].sum[1];
+    }
+}
+
+void update(PAR, int low, int high, int val) {
+    int mid = AVG(l, r);
+
+    if (low <= l && r <= high) {
+        st[x].cov += val;
+        pushUp(x, l, r);
+        return;
+    }
+    if (low < mid) update(LL, low, high, val);
+    if (high > mid) update(RR, low, high, val);
+    pushUp(x, l, r);
+}
+
+int bsearch(const double *x, int n, double key) {
+    int low = 0, high = n - 1, mid;
+
+    while (low <= high) {
+        mid = (low + high) >> 1;
+        if (EQ(key, x[mid])) return mid;
+        if (key < x[mid]) high = mid - 1;
+        else low = mid + 1;
+    }
+
+    return -1;
+}
+
+double area() {
+    int i, n, low, high;
+    double ret = 0;
+
+    sort(seg, seg + tot, cmp);
+    sort(y, y + tot);
+    for (i = n = 1; i < tot; ++i) {
+        if (!EQ(y[i], y[i - 1])) y[n++] = y[i];
+    }
+
+    memset(st, 0, sizeof(st));
+    for (i = 0; i < tot - 1; ++i) {
+        low = bsearch(y, n, seg[i].y1);
+        high = bsearch(y, n, seg[i].y2);
+        update(1, 0, n - 1, low, high, seg[i].val);
+        ret += st[1].sum[1] * (seg[i + 1].x - seg[i].x);
+    }
+
+    return ret;
+}

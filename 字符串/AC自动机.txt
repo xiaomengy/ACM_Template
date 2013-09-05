@@ -1,0 +1,52 @@
+//AC自动机建立
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAX 50
+#define MAXN 26
+#define MAXL 100010
+#define IDX(x) ((x) - 'a')
+
+using namespace std;
+
+struct Trie {
+    int next[MAXN];
+    int suffix, tag;
+} trie[MAX];
+
+int tot, que[MAX], front, tail;
+
+void init() {
+    memset(trie, 0, sizeof(trie));
+    tot = 1;
+}
+
+void insert(const char *s) {
+    int r;
+    for (r = 0; *s; ++s) {
+        if (!trie[r].next[IDX(*s)]) trie[r].next[IDX(*s)] = tot++;
+        r = trie[r].next[IDX(*s)];
+    }
+    trie[r].tag = 1;
+}
+
+void buildAC() {
+    int i, x, y;
+
+    front = tail = 0;
+    for (que[tail++] = 0; front < tail;) {
+        x = que[front++];
+        for (i = 0; i < MAXN; ++i) {
+            if (y = trie[x].next[i]) {
+                trie[y].suffix = x ? trie[trie[x].suffix].next[i] : 0;
+                trie[y].tag |= trie[trie[y].suffix].tag;
+                que[tail++] = y;
+            } else {
+                trie[x].next[i] = x ? trie[trie[x].suffix].next[i] : 0;
+            }
+        }
+    }
+}
+

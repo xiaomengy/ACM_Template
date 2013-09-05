@@ -1,0 +1,30 @@
+//博弈PVS搜索算法，配合招法排序效果更好
+　 
+int absearch(int alpha, int beta, int col, int dep) {
+	int tot, val, i;
+	bool tag = false;
+	Move moveList[MAXM];
+	
+	if (isGameOver()) return -MAX;
+	if (dep == maxDep) return evalue(col);
+	if (!(tot = makeMove(moveList, col))) return -MAX;
+
+	for (i = 0; i < tot; ++i) {
+		doMove(moveList[i]);
+		if (tag) {
+            val = -absearch(-alpha - 1, -alpha, col ^ 1, dep + 1);
+            if (val > alpha && val < beta) {
+                val = -absearch(-beta, -alpha, col ^ 1, dep + 1);
+            }
+		} else {
+            val = -absearch(-beta, -alpha, col ^ 1, dep + 1);
+		}
+		unMove(moveList[i]);
+		if (val >= beta) return beta;
+		if (val > alpha) {
+		    alpha = val; tag = true;
+		}
+	}
+
+	return alpha;
+}

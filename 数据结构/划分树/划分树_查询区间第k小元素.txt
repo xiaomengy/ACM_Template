@@ -1,0 +1,89 @@
+// 划分树查询区间第k小元素
+// 建树之前需要对ss排序，同时设置 tot = n, 建树build(0, n - 1, 0) 即可建树
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+
+#define MAXN 200010
+#define MAXM 2000010
+#define AVG(x, y) (((x) + (y)) >> 1)
+#define ADDR(x, y) (((x) + (y)) | ((x) != (y)))
+
+using namespace std;
+
+struct SegTree {
+    int id, val;
+} st[MAXM], ss[MAXN];
+
+int lnum[MAXM], lt[MAXN], rt[MAXN], tot;
+
+bool cmp(const SegTree &a, const SegTree &b) {
+    return a.val < b.val;
+}
+
+void build(int l, int r, int start) {
+    int mid = AVG(l, r), p = ADDR(l, r), i, j, k = start, sum = 0;
+
+    if (l == r) {
+        st[start] = ss[l];
+        return;
+    }
+
+    lt[p] = tot;
+    rt[p] = tot + mid - l + 1;
+    tot += r - l + 1;
+    build(l, mid, lt[p]);
+    build(mid + 1, r, rt[p]);
+
+    i = lt[p];
+    j = rt[p];
+    while (i <= lt[p] + mid - l && j < rt[p] + r - mid) {
+        if (st[i].id < st[j].id) {
+            st[k] = st[i++];
+            lnum[k++] = ++sum;
+        } else {
+            st[k] = st[j++];
+            lnum[k++] = sum;
+        }
+    }
+    while (i <= lt[p] + mid - l) {
+        st[k] = st[i++];
+        lnum[k++] = ++sum;
+    }
+    while (j < rt[p] + r - mid) {
+        st[k] = st[j++];
+        lnum[k++] = sum;
+    }
+}
+
+int query(int l, int r, int ls, int rs, int k, int start) {
+    int mid = AVG(l, r), p = ADDR(l, r);
+	int i = ls > 0 ? lnum[start + ls - 1] : 0, j = lnum[start + rs];
+
+    if (l == r) return st[start].val;
+    if (j - i >= k) return query(l, mid, i, j - 1, k, lt[p]);
+    return query(mid + 1, r, ls - i, rs - j, k - j + i, rt[p]);
+}
+
+int main() {
+    int n, q, a, b, k, i;
+
+    while (~scanf("%d %d", &n, &q)) {
+        for (i = 0; i < n; ++i) {
+            scanf("%d", &ss[i].val);
+            ss[i].id = i;
+        }
+        sort(ss, ss + n, cmp);
+        tot = n;
+        build(0, n - 1, 0);
+
+        while (q--) {
+            scanf("%d %d %d", &a, &b, &k);
+            printf("%d\n", query(0, n - 1, a - 1, b - 1, k, 0));
+        }
+    }
+
+    return 0;
+}

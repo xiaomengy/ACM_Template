@@ -1,0 +1,14 @@
+//整数开平方，返回开方下取整的数
+
+int intSqrt(int n) {
+	int x, y = n;
+	
+	if (!n) return 0;
+	do {
+		x = y;
+		y = (x + n / x) >> 1;
+	} while (y < x);
+	
+	return x;
+}
+

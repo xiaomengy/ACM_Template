@@ -1,0 +1,100 @@
+// 平面图曼哈顿距离最小生成树，复杂度O(nlogn)
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <utility>
+#include <algorithm>
+
+#define MAX 100010
+#define INF 0x3F3F3F3F
+#define LB(x) ((x) & -(x))
+
+using namespace std;
+
+typedef pair<int, int> Pii;
+
+struct Point {
+    int x, y, id;
+
+    Point() {}
+    Point(int _x, int _y, int _id) : x(_x), y(_y), id(_id) {}
+
+    bool operator <(const Point &p) const {
+        return x == p.x ? y < p.y : x < p.x;
+    }
+} p[MAX];
+
+struct Edge {
+    int u, v, val;
+
+    Edge() {}
+    Edge(int _u, int _v, int _val) : u(_u), v(_v), val(_val) {}
+
+    bool operator <(const Edge &e) const {
+        return val < e.val;
+    }
+} edge[MAX << 2];
+
+struct BIT {
+    Pii c[MAX];
+    int sz;
+
+    void init(int n) {
+        sz = n;
+        fill(c, c + sz + 1, make_pair(INF, -1));
+    }
+
+    void update(int k, const Pii &v) {
+        for (int i = k; i <= sz; i += LB(i)) c[i] = min(c[i], v);
+    }
+
+    Pii query(int k) {
+        Pii ret = make_pair(INF, -1);
+        for (int i = k; i; i -= LB(i)) ret = min(ret, c[i]);
+        return ret;
+    }
+} bit;
+
+int x[MAX], pre[MAX];
+
+int root(int x) {
+    return ~pre[x] ? (pre[x] = root(pre[x])) : x;
+}
+
+int solve(int n) {
+    int i, pt, u, v, d, tot, m = 0, cnt = 0, ret = 0;
+    Pii cur;
+
+    for (d = 0; d < 4; ++d) {
+        if (d & 1) {
+            for (i = 0; i < n; ++i) swap(p[i].x, p[i].y);
+        } else if (d == 2) {
+            for (i = 0; i < n; ++i) p[i].x = -p[i].x;
+        }
+        for (tot = i = 0; i < n; ++i) x[tot++] = p[i].x - p[i].y;
+        sort(x, x + tot);
+        tot = unique(x, x + tot) - x;
+
+        bit.init(tot);
+        sort(p, p + n);
+        for (i = n - 1; ~i; --i) {
+            pt = lower_bound(x, x + tot, p[i].x - p[i].y) - x;
+            cur = bit.query(pt + 1);
+            if (~cur.second) edge[m++] = Edge(p[i].id, p[cur.second].id, cur.first - p[i].x - p[i].y);
+            bit.update(pt + 1, make_pair(p[i].x + p[i].y, i));
+        }
+    }
+
+    memset(pre, -1, sizeof(pre));
+    sort(edge, edge + m);
+    for (i = 0; i < m && cnt < n - 1; ++i) {
+        u = root(edge[i].u); v = root(edge[i].v);
+        if (u != v) {
+            ret += edge[i].val; ++cnt;
+            pre[u] = v;
+        }
+    }
+
+    return ret;
+}

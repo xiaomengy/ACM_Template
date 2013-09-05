@@ -1,0 +1,118 @@
+// 插头dp_单回路，使用括号表示法
+// solve() 前需要记录 dx，dy 为最后一个可走格子
+// x, y 均从 1 开始计数
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAXN 15
+#define MOD 19993
+#define MAX 20010
+
+typedef long long i64;
+
+using namespace std;
+
+struct Hash {
+    struct Item {
+        int s, next;
+        i64 cnt;
+    } item[MAX];
+
+    int head[MOD], tot;
+
+    void init() {
+        memset(head, -1, sizeof(head));
+        tot = 0;
+    }
+
+    i64 &operator [](int s) {
+        int i, key = s % MOD;
+
+        for (i = head[key]; ~i; i = item[i].next) {
+            if (item[i].s == s) return item[i].cnt;
+        }
+        item[tot].s = s;
+        item[tot].next = head[key];
+        head[key] = tot;
+
+        return item[tot++].cnt = 0;
+    }
+} dp[2];
+
+int sta[2][MAX], tot[2];
+int mat[MAXN][MAXN], stk[MAXN], top, dx, dy;
+
+int findL(int s, int p) {
+    int i, cur;
+
+    for (i = top = 0; s && i < p; s >>= 2, ++i) {
+        if (cur = (s & 3)) {
+            if (cur == 1) stk[++top] = i;
+            else --top;
+        }
+    }
+
+    return stk[top];
+}
+
+int findR(int s, int p) {
+    int i, cur;
+
+    for (i = top = 0; s; s >>= 2, ++i) {
+        if (cur = (s & 3)) {
+            if (cur == 1) stk[++top] = i;
+            else if (stk[top] == p) break;
+            else --top;
+        }
+    }
+
+    return i;
+}
+
+inline void update(int x, int key, i64 val) {
+    if (!dp[x][key]) sta[x][tot[x]++] = key;
+    dp[x][key] += val;
+}
+
+i64 solve(int n, int m) {
+    int x = 0, i, j, k, p, q, cur, tmp;
+
+    dp[0].init(); dp[1].init();
+    tot[0] = tot[1] = 0;
+    update(0, 0, 1);
+    for (i = 1; i <= n; ++i) {
+        for (j = 0; j <= m; ++j, dp[x].init(), tot[x] = 0, x ^= 1) {
+            for (k = 0; k < tot[x]; ++k) {
+                cur = sta[x][k];
+                if (i == dx && j == dy && !cur) return dp[x][0];
+                if (j == m) {
+                    if (i < n && !(cur & (3 << (m << 1)))) update(x ^ 1, cur << 2, dp[x][cur]);
+                } else {
+                    tmp = cur & ~(15 << (j << 1));
+                    p = (cur >> (j << 1)) & 3; q = (cur >> ((j + 1) << 1)) & 3;
+                    if (!p && !q) {
+                        update(x ^ 1, mat[i][j + 1] ? (tmp | (9 << (j << 1))) : cur, dp[x][cur]);
+                    } else if (mat[i][j + 1] && !(p && q)) {
+                        update(x ^ 1, tmp | ((p + q) << (j << 1)), dp[x][cur]);
+                        update(x ^ 1, tmp | (((p + q) << 2) << (j << 1)), dp[x][cur]);
+                    } else if (mat[i][j + 1]) {
+                        if (p == 1 && q == 1) {
+                            update(x ^ 1, tmp ^ (3 << (findR(cur, j + 1) << 1)), dp[x][cur]);
+                        } else if (p == 2 && q == 2) {
+                            update(x ^ 1, tmp ^ (3 << (findL(cur, j) << 1)), dp[x][cur]);
+                        } else if (p == 1 && q == 2) {
+                            if (i == dx && j + 1 == dy) update(x ^ 1, tmp, dp[x][cur]);
+                        } else {
+                            update(x ^ 1, tmp, dp[x][cur]);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+

@@ -1,0 +1,69 @@
+// 最小树形图，朱-刘算法，O(VE)
+// 加边之前需要先 nEdge = 0
+// 此模板为固定根，根节点编号为r，若不定根，只需添加一源点，像任意结点连INF边即可
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAXV 2010
+#define MAXE 1000010
+#define INF 1000000000
+
+using namespace std;
+
+struct Edge {
+    int u, v, val;
+} edge[MAXE];
+
+int in[MAXV], pre[MAXV], id[MAXV], vis[MAXV], nEdge;
+
+void addEdge(int a, int b, int val) {
+    if (a != b) {
+        edge[nEdge].u = a;
+        edge[nEdge].v = b;
+        edge[nEdge++].val = val;
+    }
+}
+
+int directedMST(int v, int r) {
+    int i, j, cur, tmp, ret = 0;
+
+    while (1) {
+        for (i = 0; i < v; ++i) {
+            id[i] = vis[i] = -1;
+            in[i] = INF;
+        }
+        in[r] = pre[r] = 0;
+        for (i = 0; i < nEdge; ++i) {
+            if (in[edge[i].v] > edge[i].val) {
+                in[edge[i].v] = edge[i].val;
+                pre[edge[i].v] = edge[i].u;
+            }
+        }
+        for (i = 0; i < v; ++i) {
+            if (in[i] >= INF) return -1;
+            ret += in[i];
+        }
+        tmp = v;
+        for (i = v = 0; i < tmp; ++i) {
+            if (~vis[i]) continue;
+            for (cur = i; vis[cur] == -1; cur = pre[cur]) vis[cur] = i;
+            if (cur != r && vis[cur] == i) {
+                for (j = pre[cur]; j != cur; j = pre[j]) id[j] = v;
+                id[cur] = v++;
+            }
+        }
+        if (!v) break;
+        for (i = 0; i < tmp; ++i) {
+            if (id[i] == -1) id[i] = v++;
+        }
+        tmp = nEdge;
+        for (i = nEdge = 0; i < tmp; ++i) {
+            addEdge(id[edge[i].u], id[edge[i].v], edge[i].val - in[edge[i].v]);
+        }
+        r = id[r];
+    }
+
+    return ret;
+}

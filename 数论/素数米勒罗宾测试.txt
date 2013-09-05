@@ -1,0 +1,70 @@
+// 素数米勒罗宾测试模板
+// 主函数中需要首先 srand
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
+#include <ctime>
+
+#define MT 3
+#define MASK 0x7fffffffffffffffLL
+
+typedef long long i64;
+
+using namespace std;
+
+i64 randI64(i64 n) {
+    return (((i64)rand() * (i64)rand() * (i64)rand() * (i64)rand()) & MASK) % n;
+}
+
+i64 modMul(i64 a, i64 b, i64 p) {
+    i64 ret = 0;
+
+    for (a %= p; b; b >>= 1) {
+        if (b & 1) ret = (ret + a) % p;
+        a = (a << 1) % p;
+    }
+
+    return ret;
+}
+
+i64 modPow(i64 a, i64 b, i64 p) {
+    i64 ret = 1;
+
+    for (a %= p; b; b >>= 1) {
+        if (b & 1) ret = modMul(ret, a, p);
+        a = modMul(a, a, p);
+    }
+
+    return ret;
+}
+
+bool witness(i64 a, i64 n) {
+    i64 u = n - 1, x, y;
+    int i, t = 0;
+
+    for (t = 0; !(u & 1); ++t) u >>= 1;
+    x = modPow(a, u, n);
+    for (i = 0; i < t; ++i, x = y) {
+        y = modMul(x, x, n);
+        if (y == 1 && x != 1 && x != n - 1) return true;
+    }
+
+    return x != 1;
+}
+
+bool isPrime(i64 n) {
+    i64 a;
+    int i;
+
+    if (n == 2) return true;
+    if (n < 2 || !(n & 1)) return false;
+    for (i = 0; i < MT; ++i) {
+        a = randI64(n - 2) + 1;
+        if (witness(a, n)) return false;
+    }
+
+    return true;
+}
+

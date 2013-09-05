@@ -1,0 +1,74 @@
+// floyd 求无向图最小环_O(n^3)
+// 结点编号从1开始，带记录路径
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAX 110
+#define INF 100000000
+
+using namespace std;
+
+int mat[MAX][MAX], dis[MAX][MAX], pre[MAX][MAX][MAX];
+int s, t, p;
+
+void init(int n) {
+    int i, j;
+
+    for (i = 0; i <= n; i++) {
+        for (j = 0; j <= n; j++) {
+            mat[i][j] = INF;
+        }
+    }
+}
+
+int floyd(int n) {
+    int i, j, k, ans = INF;
+
+    for (k = 1; k <= n; k++) {
+        for (i = 1; i <= k; i++) {
+            for (j = i + 1; j <= k; j++) {
+                if (ans > dis[i][j] + mat[i][k] + mat[k][j]) {
+                    ans = dis[i][j] + mat[i][k] + mat[k][j];
+                    s = i; t = j; p = k;
+                }
+            }
+        }
+        for (i = 1; i <= n; i++) {
+            for (j = 1; j <= n; j++) {
+                pre[i][j][k] = pre[i][j][k - 1];
+                if (dis[i][j] > dis[i][k] + dis[k][j]) {
+                    dis[i][j] = dis[i][k] + dis[k][j];
+                    pre[i][j][k] = pre[k][j][k - 1];
+                }
+            }
+        }
+    }
+
+    return ans;
+}
+
+int main() {
+    int n, m, a, b, l, i, j;
+
+    while (scanf("%d", &n) && ~n) {
+        init(n);
+        scanf("%d", &m);
+        for (i = 0; i < m; i++) {
+            scanf("%d %d %d", &a, &b, &l);
+            mat[a][b] = mat[b][a] = min(mat[a][b], l);
+            pre[a][b][0] = a;
+            pre[b][a][0] = b;
+        }
+        memcpy(dis, mat, sizeof(mat));
+        if (floyd(n) >= INF) printf("No solution.\n");
+        else {
+            printf("%d %d %d", s, p, t);
+            for (i = pre[s][t][p - 1]; i != s; i = pre[s][i][p - 1]) printf(" %d", i);
+            printf("\n");
+        }
+    }
+
+    return 0;
+}

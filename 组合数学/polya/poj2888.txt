@@ -1,0 +1,161 @@
+//poj2888有相邻颜色限制的polya，通过矩阵乘法求染色数
+
+#define MAX 12
+#define MAXN 1000010
+#define P 9973
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+using namespace std;
+
+int mat[MAX][MAX], res[MAX][MAX], now[MAX][MAX], tmp[MAX][MAX];
+int eula[MAXN];
+
+int phi(int n) {
+    int res = 1, i, tmp;
+
+    tmp = n;
+    if (n < MAXN && eula[n] > 0) return eula[n];
+
+    for (i = 2; i * i <= n; i++) {
+        if (!(n % i)) {
+             res = res * (i - 1);
+             n /= i;
+             while (!(n % i)) {
+                 res = res * i;
+                 n /= i;
+             }
+        }
+    }
+    if (n > 1) res = res * (n - 1);
+    res %= P;
+
+    if (tmp < MAXN) eula[tmp] = res;
+    return res;
+}
+
+void matMulti(int a[MAX][MAX], int b[MAX][MAX], int c[MAX][MAX], int n) {
+    int i, j, k;
+
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++) {
+            c[i][j] = 0;
+            for (k = 0; k < n; k++) {
+                c[i][j] += a[i][k] * b[k][j];
+            }
+            c[i][j] %= P;
+        }
+    }
+}
+
+void matCpy(int a[MAX][MAX], int b[MAX][MAX], int n) {
+    int i, j;
+
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++) {
+            a[i][j] = b[i][j];
+        }
+    }
+}
+
+void matPow(int k, int n) {
+    int i;
+
+    memset(res, 0, sizeof(res));
+    for (i = 0; i < n; i++) res[i][i] = 1;
+    matCpy(now, mat, n);
+
+    while (k > 0) {
+        if (k & 1) {
+            matMulti(res, now, tmp, n);
+            matCpy(res, tmp, n);
+        }
+        matMulti(now, now, tmp, n);
+        matCpy(now, tmp, n);
+        k >>= 1;
+    }
+}
+
+int getNum(int k, int n) {
+    int i, ret = 0;
+
+    matPow(k, n);
+    for (i = 0; i < n; i++) ret = (ret + res[i][i]) % P;
+
+    return ret;
+}
+
+int extEuclid (int a, int b, int &x, int &y) {
+    int r, t;
+
+    if (!b) {
+        x = 1;
+        y = 0;
+        return a;
+    }
+    r = extEuclid (b, a % b, x, y);
+    t = x;
+    x = y;
+    y = t - a / b * y;
+
+    return r;
+}
+
+bool modularLinearEquation(int a, int b, int n, int &ans) {
+    int d, x, y;
+
+    ans = -1;
+    d = extEuclid (a, n, x, y);
+    if (b % d) return false;
+    x = x * (b / d);
+    x = (x % (n / d) + (n / d)) % (n / d);
+    ans = x;
+
+    return true;
+}
+
+void init(int n) {
+    int i, j;
+
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++) {
+            mat[i][j] = 1;
+        }
+    }
+}
+
+int solve(int n, int m) {
+    int i, l, res = 0, ans;
+
+    for (l = 1; l * l <= n; l++) {
+        if (!(n % l)) {
+            res = (res + (phi(n / l) * getNum(l, m)) % P) % P;
+            if (l * l != n) {
+                res = (res + (phi(l) * getNum(n / l, m)) % P) % P;
+            }
+        }
+    }
+
+    modularLinearEquation(n, res, P, ans);
+    return ans;
+}
+
+int main() {
+    int t, n, m, k, a, b, i;
+
+    scanf("%d", &t);
+    while (t--) {
+        scanf("%d %d %d", &n, &m, &k);
+        init(m);
+        for (i = 0; i < k; i++) {
+            scanf("%d %d", &a, &b);
+            mat[a - 1][b - 1] = 0;
+            mat[b - 1][a - 1] = 0;
+        }
+        printf("%d\n", solve(n, m));
+    }
+
+    return 0;
+}
+

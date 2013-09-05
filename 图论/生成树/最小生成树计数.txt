@@ -1,0 +1,146 @@
+// 求最小生成树个数，使用矩阵-树定理生成函数
+// 原图中不能有重边和自环，否则需要使用kruskal算法以及邻接表保存
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <map>
+
+#define MAXV 128
+#define MAXE 1024
+#define P 31011
+#define INF 10000000000000000LL
+
+typedef long long i64;
+
+using namespace std;
+
+i64 d[MAXV][MAXV], dis[MAXV];
+int pre[MAXV], mat[MAXV][MAXV];
+bool vis[MAXV];
+
+map<i64, int> genMat[MAXV][MAXV];
+
+void init(int n) {
+    int i, j;
+
+    memset(mat, 0, sizeof(mat));
+    for (i = 0; i < n; ++i) {
+        fill(d[i], d[i] + n, INF);
+        for (j = 0; j < n; ++j) {
+            genMat[i][j].clear();
+        }
+    }
+}
+
+void polyAdd(map<i64, int> &a, map<i64, int> &b) {
+    map<i64, int>::iterator i, j, p;
+
+    for (i = a.begin(), j = b.begin(); i != a.end() && j != b.end(); ) {
+        if (i->first < j->first) ++i;
+        else if (j->first < i->first) a.insert(*(j++));
+        else {
+            p = i; ++p;
+            i->second += (j++)->second;
+            if (!i->second) a.erase(i);
+            i = p;
+        }
+    }
+    for ( ; j != b.end(); ++j) a.insert(*j);
+}
+
+void polyAdd(map<i64, int> &a, i64 x, int y) {
+    map<i64, int>::iterator it = a.find(x);
+
+    if (it != a.end()) it->second += y;
+    else a.insert(make_pair(x, y));
+}
+
+i64 prim(int n, int src) {
+    int i, j, x;
+    i64 v, ret = 0;
+
+    fill(dis, dis + n, INF);
+    memset(vis, 0, sizeof(vis));
+    dis[src] = 0; pre[src] = -1;
+    for (i = 0; i < n; ++i) {
+        for (v = INF, j = 0; j < n; ++j) {
+            if (!vis[j] && v > dis[j]) v = dis[x = j];
+        }
+        ret += dis[x]; vis[x] = true;
+        for (j = 0; j < n; ++j) {
+            if (!vis[j] && dis[j] > d[x][j]) dis[j] = d[pre[j] = x][j];
+        }
+    }
+
+    return ret;
+}
+
+void dfs(int n, int x) {
+    int i;
+    i64 v;
+    map<i64, int>::iterator it;
+
+    for (i = 0; i < n; ++i) {
+        if (!(pre[i] ^ x)) dfs(n, i);
+    }
+    if (~pre[x]) {
+        for (v = INF, i = 0; i < n; ++i) {
+            if (!genMat[i][x].empty()) v = min(v, genMat[i][x].begin()->first);
+        }
+        for (i = 0; i < n; ++i) {
+            polyAdd(genMat[i][pre[x]], genMat[i][x]);
+            it = genMat[i][x].find(v);
+            if (it != genMat[i][x].end()) mat[i][x] = it->second;
+        }
+    }
+}
+
+int det(int a[MAXV][MAXV], int n, int p) {
+    int i, j, k, t, ans = 1;
+
+    for (i = 0; i < n; ++i) {
+        for (j = i + 1; j < n; ++j) {
+            for ( ; a[j][i]; ans = -ans) {
+                for (t = a[i][i] / a[j][i], k = 0; k < n; ++k) {
+                    a[i][k] = (a[i][k] - a[j][k] * t) % p;
+                    swap(a[i][k], a[j][k]);
+                }
+            }
+        }
+        if (!a[i][i]) return 0;
+        ans = ans * a[i][i] % p;
+    }
+
+    return (ans % p + p) % p;
+}
+
+int solve(int n) {
+    prim(n, n - 1);
+    dfs(n, n - 1);
+    return det(mat, n - 1, P);
+}
+
+int main() {
+    int n, m, a, b, i;
+    i64 w;
+    map<i64, int> x, y;
+
+    while (~scanf("%d %d", &n, &m)) {
+        init(n);
+        for (i = 0; i < m; ++i) {
+            scanf("%d %d %lld", &a, &b, &w);
+            d[--a][--b] = d[b][a] = w;
+            polyAdd(genMat[a][a], w, 1);
+            polyAdd(genMat[b][b], w, 1);
+            polyAdd(genMat[a][b], w, -1);
+            polyAdd(genMat[b][a], w, -1);
+        }
+        printf("%d\n", solve(n));
+    }
+
+    return 0;
+}
+
+

@@ -1,0 +1,104 @@
+//求平面点集最小圆覆盖
+//使用随机增量法，返回值为所求圆, 需要提前 srand
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
+#include <cmath>
+#include <ctime>
+#include <algorithm>
+
+#define MAX 100010
+#define ZERO(x) (fabs(x) < eps)
+
+using namespace std;
+
+const double eps = 1e-8;
+
+struct Point {
+    double x, y;
+
+    Point() {}
+    Point(double _x, double _y) : x(_x), y(_y) {}
+
+    Point operator -(const Point &p) const {
+        return Point(x - p.x, y - p.y);
+    }
+
+    double xMul(const Point &p) const {
+        return x * p.y - y * p.x;
+    }
+} p[MAX];
+
+struct Circle {
+    Point c;
+    double r;
+};
+
+double dis(const Point &a, const Point &b) {
+    return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
+}
+
+bool inLine(const Point &p, const Point &a, const Point &b) {
+    return ZERO((p - a).xMul(p - b));
+}
+
+bool inCircle(const Point &a, const Circle &c) {
+    return dis(a, c.c) <= c.r;
+}
+
+Circle getCircle(const Point &a, const Point &b, const Point &c) {
+    double a1, a2, b1, b2, c1, c2;
+    Circle ret;
+
+    a1 = 2 * (a.x - b.x); a2 = 2 * (a.x - c.x);
+    b1 = 2 * (a.y - b.y); b2 = 2 * (a.y - c.y);
+    c1 = a.x * a.x - b.x * b.x + a.y * a.y - b.y * b.y;
+    c2 = a.x * a.x - c.x * c.x + a.y * a.y - c.y * c.y;
+    ret.c.x = Point(c1, b1).xMul(Point(c2, b2)) / Point(a1, b1).xMul(Point(a2, b2));
+    ret.c.y = Point(a1, c1).xMul(Point(a2, c2)) / Point(a1, b1).xMul(Point(a2, b2));
+    ret.r = dis(ret.c, a);
+
+    return ret;
+}
+
+Circle update(int k) {
+    int i, j;
+    Circle ret;
+
+    ret.c = Point((p[k - 1].x + p[k].x) / 2, (p[k - 1].y + p[k].y) / 2);
+    ret.r = dis(p[k - 1], p[k]) / 2;
+    for (i = k - 2; ~i; --i) {
+        if (!inCircle(p[i], ret)) {
+            ret.c = Point((p[i].x + p[k].x) / 2, (p[i].y + p[k].y) / 2);
+            ret.r = dis(p[i], p[k]) / 2;
+            for (j = i + 1; j < k; ++j) {
+                if (!inLine(p[j], p[i], p[k]) && !inCircle(p[j], ret)) {
+                    ret = getCircle(p[i], p[j], p[k]);
+                }
+            }
+        }
+    }
+
+    return ret;
+}
+
+Circle solve(int n) {
+    int i;
+    Circle ret;
+
+    if (n == 1) {
+        ret.c = p[0]; ret.r = 0;
+        return ret;
+    }
+
+    random_shuffle(p, p + n);
+    ret.c = Point((p[0].x + p[1].x) / 2, (p[0].y + p[1].y) / 2);
+    ret.r = dis(p[0], p[1]) / 2;
+    for (i = 2; i < n; ++i) {
+        if (!inCircle(p[i], ret)) ret = update(i);
+    }
+
+    return ret;
+}

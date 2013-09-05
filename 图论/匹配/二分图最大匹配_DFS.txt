@@ -1,0 +1,58 @@
+//DFS求二分图最大匹配，邻接表实现，时间复杂度O(V * E)
+//MAXV为节点较多的一侧节点数
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAXV 5010
+#define MAXE 1000100
+
+using namespace std;
+
+struct Edge {
+    int ed, next;
+} edge[MAXE];
+
+int head[MAXV], match[MAXV], nEdge;
+bool vis[MAXV];
+
+void init() {
+    memset(head, -1, sizeof(head));
+    nEdge = 0;
+}
+
+void addEdge(int a, int b) {
+    edge[nEdge].ed = b;
+    edge[nEdge].next = head[a];
+    head[a] = nEdge++;
+}
+
+bool find(int x) {
+    int i, y;
+
+    for (i = head[x]; ~i; i = edge[i].next) {
+        if (!vis[y = edge[i].ed]) {
+            vis[y] = true;
+            if (match[y] < 0 || find(match[y])) {
+                match[y] = x;
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+int maxMatch(int n) {
+    int i, ret = 0;
+
+    memset(match, -1, sizeof(match));
+    for (i = 0; i < n; ++i) {
+        memset(vis, 0, sizeof(vis));
+        if (find(i)) ++ret;
+    }
+
+    return ret;
+}
+

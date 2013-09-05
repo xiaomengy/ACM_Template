@@ -1,0 +1,237 @@
+// splay 树模板，支持各种类型
+// select 和 rank 操作的排名均从1开始
+// 使用时需要对 T 类型重载 < 
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+using namespace std;
+
+template<typename T>
+class SplayTree {
+public:
+    SplayTree();
+    ~SplayTree();
+    void insert(const T &item);
+    void remove(const T &item);
+    int size() { return root->tot; }
+    bool empty() { return root == nullNode; }
+    void clear();
+	bool find(const T &item);
+    const T &maxNum();
+    const T &minNum();
+    const T &select(int r);
+    int rank(const T &item);
+
+private:
+    struct SplayNode {
+        T key;
+        int tot;
+        SplayNode *left, *right;
+        SplayNode() {}
+        SplayNode(const T &item) : key(item) {}
+    } *root, *nullNode;
+
+    void leftRotate(SplayNode *&x);
+    void rightRotate(SplayNode *&x);
+    void splay(const T &item, SplayNode *&x);
+    void clear(SplayNode *&x);
+};
+
+template<typename T>
+SplayTree<T>::SplayTree() {
+    nullNode = new SplayNode();
+
+    nullNode->tot = 0;
+    nullNode->left = nullNode;
+    nullNode->right = nullNode;
+    root = nullNode;
+}
+
+template<typename T>
+SplayTree<T>::~SplayTree() {
+    clear();
+    delete nullNode;
+}
+
+template<typename T>
+void SplayTree<T>::leftRotate(SplayNode *&x) {
+    SplayNode *p = x->right;
+
+    x->right = p->left;
+    p->left = x;
+    x->tot = x->left->tot + x->right->tot + 1;
+    x = p;
+}
+
+template<typename T>
+void SplayTree<T>::rightRotate(SplayNode *&x) {
+    SplayNode *p = x->left;
+
+    x->left = p->right;
+    p->right = x;
+    x->tot = x->left->tot + x->right->tot + 1;
+    x = p;
+}
+
+template<typename T>
+void SplayTree<T>::splay(const T &item, SplayNode *&x) {
+    int lsize = 0, rsize = 0;
+    SplayNode head, *leftMax = &head, *rightMin = &head, *p;
+    head.left = head.right = nullNode;
+
+    while (1) {
+        if (item < x->key) {
+            if (x->left != nullNode && item < x->left->key) rightRotate(x);
+            if (x->left == nullNode) break;
+            rightMin->left = x;
+            rightMin = x;
+            x = x->left;
+            rsize += rightMin->right->tot + 1;
+        } else if (x->key < item) {
+            if (x->right != nullNode && x->right->key < item) leftRotate(x);
+            if (x->right == nullNode) break;
+            leftMax->right = x;
+            leftMax = x;
+            x = x->right;
+            lsize += leftMax->left->tot + 1;
+        } else {
+            break;
+        }
+    }
+
+    lsize += x->left->tot;
+    rsize += x->right->tot;
+    x->tot = lsize + rsize + 1;
+    leftMax->right = nullNode;
+    rightMin->left = nullNode;
+    for (p = head.right; p != nullNode; p = p->right) {
+        p->tot = lsize;
+        lsize -= p->left->tot + 1;
+    }
+    for (p = head.left; p != nullNode; p = p->left) {
+        p->tot = rsize;
+        rsize -= p->right->tot + 1;
+    }
+
+    leftMax->right = x->left;
+    x->left = head.right;
+    rightMin->left = x->right;
+    x->right = head.left;
+}
+
+template<typename T>
+void SplayTree<T>::clear(SplayNode *&x) {
+    if (x != nullNode) {
+        clear(x->left);
+        clear(x->right);
+        delete x;
+    }
+}
+
+template<typename T>
+void SplayTree<T>::insert(const T &item) {
+    SplayNode *newNode = new SplayNode(item);
+
+    if (root == nullNode) {
+        newNode->tot = 1;
+        newNode->left = nullNode;
+        newNode->right = nullNode;
+        root = newNode;
+        return;
+    }
+    splay(item, root);
+    newNode->tot = root->tot + 1;
+    if (item < root->key) {
+        newNode->left = root->left;
+        root->left = nullNode;
+        newNode->right = root;
+        root->tot = root->right->tot + 1;
+        root = newNode;
+    } else {
+        newNode->right = root->right;
+        root->right = nullNode;
+        newNode->left = root;
+        root->tot = root->left->tot + 1;
+        root = newNode;
+    }
+}
+
+template<typename T>
+void SplayTree<T>::remove(const T &item) {
+    SplayNode *newRoot;
+    int tot;
+
+    if (root == nullNode) return;
+    splay(item, root);
+    if (root->key < item || item < root->key) return;
+    tot = root->tot;
+    if (root->left == nullNode) newRoot = root->right;
+    else {
+        newRoot = root->left;
+        splay(item, newRoot);
+        newRoot->right = root->right;
+    }
+    newRoot->tot = root->tot - 1;
+    delete root;
+    root = newRoot;
+}
+
+template<typename T>
+void SplayTree<T>::clear() {
+    clear(root);
+    root = nullNode;
+}
+
+template<typename T>
+bool SplayTree<T>::find(const T &item) {
+    if (root == nullNode) return false;
+    splay(item, root);
+    return !(root->key < item || item < root->key);
+}
+
+template<typename T>
+const T &SplayTree<T>::maxNum() {
+    SplayNode *p = root;
+    while (p->right != nullNode) p = p->right;
+    splay(p->key, root);
+    return p->key;
+}
+
+template<typename T>
+const T &SplayTree<T>::minNum() {
+    SplayNode *p = root;
+    while (p->left != nullNode) p = p->left;
+    splay(p->key, root);
+    return p->key;
+}
+
+template<typename T>
+const T &SplayTree<T>::select(int r) {
+    SplayNode *p = root;
+    int pos;
+
+    while (1) {
+        pos = p->left ? p->left->tot : 0;
+        if (r <= pos) p = p->left;
+        else if (r > pos + 1) {
+            r -= pos + 1;
+            p = p->right;
+        } else {
+            break;
+        }
+    }
+    splay(p->key, root);
+
+    return p->key;
+}
+
+template<typename T>
+int SplayTree<T>::rank(const T &item) {
+    if (root == nullNode) return 1;
+    splay(item, root);
+    if (root->key < item) return root->left->tot + 2;
+    return root->left->tot + 1;
+}
+

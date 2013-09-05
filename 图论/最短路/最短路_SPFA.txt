@@ -1,0 +1,59 @@
+// SPFA算法求单源最短路
+// 使用邻接表，带有SLF优化
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+
+#define MAXV 1010
+#define MAXE 100010
+#define INF 1000000000
+
+using namespace std;
+
+struct Edge {
+    int ed, val, next;
+} edge[MAXE];
+
+int head[MAXV], nEdge;
+int que[MAXV * MAXV], dis[MAXV], cnt[MAXV], front, tail;
+bool vis[MAXV];
+
+void init() {
+    memset(head, -1, sizeof(head));
+    nEdge = 0;
+}
+
+void addEdge(int a, int b, int v) {
+    edge[nEdge].ed = b;
+    edge[nEdge].val = v;
+    edge[nEdge].next = head[a];
+    head[a] = nEdge++;
+}
+
+bool spfa(int v, int src) {
+    int i, x, y;
+
+	fill(dis, dis + v, INF);
+    memset(vis, 0, sizeof(vis));
+    memset(cnt, 0, sizeof(cnt));
+    front = tail = v;
+    dis[src] = 0; vis[que[tail++] = src] = true; ++cnt[src];
+    while (front < tail) {
+        vis[x = que[front++]] = false;
+        for (i = head[x]; ~i; i = edge[i].next) {
+            if (dis[y = edge[i].ed] > dis[x] + edge[i].val) {
+                dis[y] = dis[x] + edge[i].val;
+                if (!vis[y]) {
+                    if (front < tail && dis[y] < dis[que[front]]) que[--front] = y;
+                    else que[tail++] = y;
+                    vis[y] = true;
+                    if ((++cnt[y]) == v) return false;
+                }
+            }
+        }
+    }
+
+    return true;
+}

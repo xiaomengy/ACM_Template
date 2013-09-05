@@ -1,0 +1,111 @@
+// 3DÆë´Î×ø±ê±ä»»
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <cmath>
+
+#define ZERO(x) (fabs(x) < eps)
+
+using namespace std;
+
+const double eps = 1e-8;
+const double Pi = acos(-1.0);
+
+struct Point {
+    double x, y, z;
+
+    Point() {}
+    Point(double _x, double _y, double _z) : x(_x), y(_y), z(_z) {}
+
+    Point operator -() const {
+        return Point(-x, -y, -z);
+    }
+
+    Point operator -(const Point &p) const {
+        return Point(x - p.x, y - p.y, z - p.z);
+    }
+};
+
+struct Mat4x4 {
+    double m[4][4];
+
+    Mat4x4 () {
+        int i;
+        memset(m, 0, sizeof(m));
+        for (i = 0; i < 4; ++i) m[i][i] = 1;
+    };
+
+    Mat4x4 operator *(const Mat4x4 &mat) const {
+        Mat4x4 ret;
+        int i, j, k;
+
+        for (i = 0; i < 4; ++i) {
+            for (j = 0; j < 4; ++j) {
+                for (ret.m[i][j] = k = 0; k < 4; ++k) {
+                    ret.m[i][j] += m[i][k] * mat.m[k][j];
+                }
+            }
+        }
+
+        return ret;
+    }
+};
+
+struct Vec4 {
+    double v[4];
+
+    Vec4() {}
+    Vec4(const Point &p) {
+        v[0] = p.x; v[1] = p.y; v[2] = p.z; v[3] = 1;
+    }
+
+    Vec4 operator *(const Mat4x4 &mat) const {
+        Vec4 ret;
+        int i, j;
+
+        memset(ret.v, 0, sizeof(ret.v));
+        for (i = 0; i < 4; ++i) {
+            for (j = 0; j < 4; ++j) {
+                ret.v[j] += v[i] * mat.m[i][j];
+            }
+        }
+
+        return ret;
+    }
+};
+
+double dis(const Point &a, const Point &b) {
+    return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y) + (a.z - b.z) * (a.z - b.z));
+}
+
+// Æ½ÒÆ¾ØÕó£¬ ×ø±êÆ½ÒÆ t
+Mat4x4 translate(const Point &t) {
+    Mat4x4 ret;
+    ret.m[3][0] = t.x; ret.m[3][1] = t.y; ret.m[3][2] = t.z;
+    return ret;
+}
+
+// Ëõ·Å¾ØÕó£¬×ø±êËõ·Å s
+Mat4x4 scale(const Point &s) {
+    Mat4x4 ret;
+    ret.m[0][0] = s.x; ret.m[1][1] = s.y; ret.m[2][2] = s.z;
+    return ret;
+}
+
+// Ðý×ª¾ØÕó£¬ÈÆÖá AB ÄæÊ±ÕëÐý×ª d ½Ç¶È
+Mat4x4 rotate(const Point &a, const Point &b, double d) {
+    Mat4x4 ret;
+    double l = dis(a, b), x = (b.x - a.x) / l, y = (b.y - a.y) / l, z = (b.z - a.z) / l;
+    double sd = sin(d), cd = cos(d);
+    ret.m[0][0] = (1 - cd) * x * x + cd;
+    ret.m[0][1] = (1 - cd) * x * y + sd * z;
+    ret.m[0][2] = (1 - cd) * x * z - sd * y;
+    ret.m[1][0] = (1 - cd) * y * x - sd * z;
+    ret.m[1][1] = (1 - cd) * y * y + cd;
+    ret.m[1][2] = (1 - cd) * y * z + sd * x;
+    ret.m[2][0] = (1 - cd) * z * x + sd * y;
+    ret.m[2][1] = (1 - cd) * z * y - sd * x;
+    ret.m[2][2] = (1 - cd) * z * z + cd;
+    return translate(-a) * ret * translate(a);
+}

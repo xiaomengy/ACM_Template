@@ -1,0 +1,111 @@
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
+
+#define MAX 16
+#define LIM 50
+#define _R(x) ((x) >> 2)
+#define _C(x) ((x) & 3)
+
+using namespace std;
+
+struct State {
+    int data[MAX], p, dep, pre;
+} stk[LIM << 2];
+
+int top;
+
+const char mov[] = {"UDLR"};
+const int step[] = {-4, 4, -1, 1};
+
+char trace[LIM];
+
+int check(const State &cur) {
+    int i, j, cnt = 0;
+
+    for (i = 0; i < MAX; ++i) {
+        for (j = i + 1; j < MAX; ++j) {
+            cnt += (cur.data[j] && (cur.data[j] < cur.data[i]));
+        }
+    }
+
+    return (cnt + _R(cur.p)) & 1;
+}
+
+int evalue(const State &cur) {
+    int ret = 0, i;
+
+    for (i = 0; i < MAX; ++i) {
+        if (cur.data[i]) ret += abs(_R(i) - _R(cur.data[i] - 1)) + abs(_C(i) - _C(cur.data[i] - 1));
+    }
+
+    return ret;
+}
+
+inline int valid(int x, int d) {
+    switch (d) {
+        case 0: return _R(x);
+        case 1: return _R(x) ^ 3;
+        case 2: return _C(x);
+        case 3: return _C(x) ^ 3;
+    }
+    return 0;
+}
+
+int dfs(State &src, int lim, int &ans, char *trace) {
+    State cur, nxt;
+    int val, alpha = LIM + 1, i;
+
+    memset(trace, 0, sizeof(trace[0]) * LIM);
+    src.dep = 0; src.pre = ans = -1;
+    for (stk[top = 1] = src; top; ) {
+        cur = stk[top--];
+        if (cur.dep && ~cur.pre) trace[cur.dep - 1] = mov[cur.pre];
+        if (!(val = evalue(cur))) return ans = cur.dep;
+        if (cur.dep + val > lim) {
+            alpha = min(alpha, cur.dep + val);
+            continue;
+        }
+        for (i = 0; i < 4; ++i) {
+            if ((i ^ cur.pre ^ 1) && valid(cur.p, i)) {
+                nxt = cur;
+                swap(nxt.data[nxt.p], nxt.data[nxt.p + step[i]]);
+                nxt.p += step[i]; ++nxt.dep; nxt.pre = i;
+                stk[++top] = nxt;
+            }
+        }
+    }
+
+    return alpha;
+}
+
+int idastar(State &src, int lim, char *trace) {
+    int it, ret;
+
+    if (!check(src)) return -1;
+    memset(trace, 0, sizeof(trace));
+    for (it = evalue(src); it <= lim; ) {
+        it = dfs(src, it, ret, trace);
+        if (~ret) return ret;
+    }
+
+    return -1;
+}
+
+int main() {
+    int t, i;
+    State cur;
+
+    scanf("%d", &t);
+    while (t--) {
+        for (i = 0; i < MAX; ++i) {
+            scanf("%d", &cur.data[i]);
+            if (!cur.data[i]) cur.p = i;
+        }
+        if (~idastar(cur, LIM, trace)) printf("%s\n", trace);
+        else printf("This puzzle is not solvable.\n");
+    }
+
+    return 0;
+}

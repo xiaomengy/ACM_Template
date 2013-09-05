@@ -1,0 +1,64 @@
+//求有向图强连通分量 tarjan 算法
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAXV 10010
+#define MAXE 100010
+
+using namespace std;
+
+struct Edge {
+    int ed, next;
+} edge[MAXE];
+
+int head[MAXV], nEdge;
+int dfn[MAXV], low[MAXV], idx;
+int sid[MAXV], scnt, stk[MAXV], top;
+bool inStk[MAXV];
+
+void init() {
+    memset(head, -1, sizeof(head));
+    nEdge = 0;
+}
+
+void addEdge(int a, int b) {
+    edge[nEdge].ed = b;
+    edge[nEdge].next = head[a];
+    head[a] = nEdge++;
+}
+
+void tarjan(int x) {
+    int i, y;
+
+    dfn[x] = low[x] = idx++;
+    inStk[stk[++top] = x] = true;
+    for (i = head[x]; ~i; i = edge[i].next) {
+        if (dfn[y = edge[i].ed] < 0) {
+            tarjan(y);
+            low[x] = min(low[x], low[y]);
+        } else if (inStk[y] && dfn[y] < low[x]) {
+            low[x] = dfn[y];
+        }
+    }
+    if (dfn[x] == low[x]) {
+        do {
+            inStk[y = stk[top--]] = false;
+            sid[y] = scnt;
+        } while (y != x);
+        ++scnt;
+    }
+}
+
+void scc(int v) {
+    int i;
+
+    top = scnt = idx = 0;
+    memset(dfn, -1, sizeof(dfn));
+    for (i = 0; i < v; i++) {
+        if (dfn[i] < 0) tarjan(i);
+    }
+}
+
+

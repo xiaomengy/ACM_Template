@@ -1,0 +1,73 @@
+// 线段树_区间增减区间求和
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAX 100010
+#define LC(x) ((x) << 1)
+#define RC(x) (((x) << 1) | 1)
+#define AVG(x, y) (((x) & (y)) + (((x) ^ (y)) >>1))
+#define PAR int x, int l, int r
+#define LL LC(x), l, mid
+#define RR RC(x), mid + 1, r
+
+using namespace std;
+
+struct SegTree {
+    int sum, add;
+} st[MAX << 2];
+
+int a[MAX];
+
+void pushUp(int x) {
+    st[x].sum = st[LC(x)].sum + st[RC(x)].sum;
+}
+
+void pushDown(int x, int w) {
+    if (st[x].add) {
+        st[LC(x)].add += st[x].add;
+        st[RC(x)].add += st[x].add;
+        st[LC(x)].sum += st[x].add * (w - (w >> 1));
+        st[RC(x)].sum += st[x].add * (w >> 1);
+        st[x].add = 0;
+    }
+}
+
+void build(PAR) {
+    int mid = AVG(l, r);
+
+    st[x].add = 0;
+    if (l == r) {
+        st[x].sum = a[l];
+        return;
+    }
+    build(LL); build(RR);
+    pushUp(x);
+}
+
+void update(PAR, int low, int high, int val) {
+    int mid = AVG(l, r);
+
+    if (low <= l && r <= high) {
+        st[x].add += val;
+        st[x].sum += val * (r - l + 1);
+        return;
+    }
+    pushDown(x, r - l + 1);
+    if (low <= mid) update(LL, low, high, val);
+    if (high > mid) update(RR, low, high, val);
+    pushUp(x);
+}
+
+int query(PAR, int low, int high) {
+    int mid = AVG(l, r), ret = 0;
+
+    if (low <= l && r <= high) return st[x].sum;
+    pushDown(x, r - l + 1);
+    if (low <= mid) ret += query(LL, low, high);
+    if (high > mid) ret += query(RR, low, high);
+
+    return ret;
+}
+

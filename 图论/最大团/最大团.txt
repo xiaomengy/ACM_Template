@@ -1,0 +1,55 @@
+// 最大团模板, 结点编号从0开始
+// cnt 和 solve() 返回值为最大团个数, vx记录最大团包含结点
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAX 64
+
+using namespace std;
+
+struct MaxClique {
+    int mat[MAX][MAX], c[MAX], cur[MAX], vx[MAX], nv, cnt;
+
+    void init(int n) {
+        memset(mat, 0, sizeof(mat));
+        nv = n;
+    }
+
+    void addEdge(int a, int b) {
+        mat[a][b] = mat[b][a] = 1;
+    }
+
+    bool dfs(const int *u, int n, int m) {
+        int v[MAX], i, j, k;
+
+        if (n) {
+            for (i = 0; i < n && i < n + m - cnt; ++i) {
+                if (m + c[u[i]] <= cnt) return false;
+                for (cur[m] = u[i], k = 0, j = i + 1; j < n; ++j) {
+                    if (mat[u[i]][u[j]]) v[k++] = u[j];
+                }
+                if (dfs(v, k, m + 1)) return true;
+            }
+        } else if (cnt < m) {
+            memcpy(vx, cur, (cnt = m) * sizeof(vx[0]));
+            return true;
+        }
+
+        return false;
+    }
+
+    int solve() {
+        int v[MAX], n, i, j;
+
+        for (cnt = 0, i = nv - 1; ~i; c[i--] = cnt) {
+            for (cur[n = 0] = i, j = i + 1; j < nv; ++j) {
+                if (mat[i][j]) v[n++] = j;
+            }
+            dfs(v, n, 1);
+        }
+
+        return cnt;
+    }
+} maxClique;

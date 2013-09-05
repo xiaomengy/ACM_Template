@@ -1,0 +1,55 @@
+// 线段树_单点增减区间求和
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAX 50010
+#define LC(x) ((x) << 1)
+#define RC(x) (((x) << 1) | 1)
+#define AVG(x, y) (((x) & (y)) + (((x) ^ (y)) >> 1))
+#define PAR int x, int l, int r
+#define LL LC(x), l, mid
+#define RR RC(x), mid + 1, r
+
+using namespace std;
+
+int sum[MAX << 2], a[MAX];
+
+void pushUp(int x) {
+    sum[x] = sum[LC(x)] + sum[RC(x)];
+}
+
+void build(PAR) {
+    int mid = AVG(l, r);
+
+    if (l == r) {
+        sum[x] = a[l];
+        return;
+    }
+    build(LL); build(RR);
+    pushUp(x);
+}
+
+void update(PAR, int p, int val) {
+    int mid = AVG(l, r);
+
+    if (l == r) {
+        sum[x] += val;
+        return;
+    }
+    if (p <= mid) update(LL, p, val);
+    else update(RR, p, val);
+    pushUp(x);
+}
+
+int query(PAR, int low, int high) {
+    int mid = AVG(l, r), ret = 0;
+
+    if (low <= l && r <= high) return sum[x];
+    if (low <= mid) ret += query(LL, low, high);
+    if (high > mid) ret += query(RR, low, high);
+
+    return ret;
+}
+

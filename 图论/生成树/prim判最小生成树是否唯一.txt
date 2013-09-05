@@ -1,0 +1,90 @@
+//判断最小生成树是否唯一
+//prim算法改进，求出MST树权并且判断是否唯一
+
+#define MAX 110
+#define INF 100000000
+#include <cstdio>
+#include <cstring>
+
+using namespace std;
+
+int map[MAX][MAX], max[MAX][MAX];
+int dis[MAX], path[MAX];
+bool vis[MAX];
+
+bool prim(int n, int &ans) {
+    int i, j, p, min, s;
+
+    for (i = 0; i < n; i++) dis[i] = INF;
+    memset(vis, 0, sizeof(vis));
+    memset(max, 0, sizeof(max));
+    memset(path, 0, sizeof(path));
+    dis[0] = 0;
+
+    ans = 0;
+    s = n;
+    while (s--) {
+        min = INF + 1;
+        for (i = 0; i < n; i++) {
+            if (!vis[i] && min > dis[i]) {
+                min = dis[i];
+                p = i;
+            }
+        }
+        ans += dis[p];
+        vis[p] = true;
+        for (i = 0; i < n; i++) {
+            if (vis[i]) {
+                if (map[path[p]][p] < max[i][path[p]]) max[i][p] = max[i][path[p]];
+                else max[i][p] = map[path[p]][p];
+                max[p][i] = max[i][p];
+            }
+            if (!vis[i] && map[p][i] < dis[i]) {
+                dis[i] = map[p][i];
+                path[i] = p;
+            }
+        }
+    }
+
+    for (i = 0; i < n; i++) {
+        for (j = i + 1; j < n; j++) {
+            if (j != path[i] && i != path[j]) {
+                if (map[i][j] == max[i][j]) return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+int main() {
+    int i, j, n, m, t, a, b, l, ans;
+
+    scanf("%d", &t);
+    while (t--) {
+        scanf("%d %d", &n, &m);
+        for (i = 0; i < n; i++) {
+            for (j = 0; j < n; j++) {
+                map[i][j] = INF;
+            }
+            map[i][i] = 0;
+        }
+
+        if (!m) {
+            printf("0\n");
+            continue;
+        }
+
+        while (m--) {
+            scanf("%d %d %d", &a, &b, &l);
+            map[a - 1][b - 1] = l;
+            map[b - 1][a - 1] = l;
+        }
+
+
+        if (!prim(n, ans)) printf("Not Unique!\n");
+        else printf("%d\n", ans);
+    }
+
+    return 0;
+}

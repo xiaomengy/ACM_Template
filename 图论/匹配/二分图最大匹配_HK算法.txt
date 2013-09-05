@@ -1,0 +1,88 @@
+//二分图最大匹配 Hopcroft-Karp算法，时间复杂度O(E * V^0.5)
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <cmath>
+
+#define MAXV 3100
+#define MAXE 10000000
+#define INF 1000000000
+
+using namespace std;
+
+struct Edge {
+    int ed, next;
+} edge[MAXE];
+
+int head[MAXV], nEdge;
+int matchx[MAXV], matchy[MAXV], disx[MAXV], disy[MAXV], dis;
+int que[MAXV], front, tail;
+bool vis[MAXV];
+
+void init() {
+    memset(head, -1, sizeof(head));
+    nEdge = 0;
+}
+
+void addEdge(int a, int b) {
+    edge[nEdge].ed = b;
+    edge[nEdge].next = head[a];
+    head[a] = nEdge++;
+}
+
+bool bfs(int v) {
+    int i, x, y;
+
+    front = tail = 0;
+    dis = INF;
+    memset(disx, -1, sizeof(disx));
+    memset(disy, -1, sizeof(disy));
+    for (i = 0; i < v; ++i) {
+        if (matchx[i] < 0) disx[que[tail++] = i] = 0;
+    }
+    while (front < tail) {
+        if (disx[x = que[front++]] > dis) break;
+        for (i = head[x]; ~i; i = edge[i].next) {
+            if (disy[y = edge[i].ed] < 0) {
+                disy[y] = disx[x] + 1;
+                if (matchy[y] < 0) dis = disy[y];
+                else disx[que[tail++] = matchy[y]] = disy[y] + 1;
+            }
+        }
+    }
+
+    return dis < INF;
+}
+
+bool dfs(int x) {
+    int i, y;
+
+    for (i = head[x]; ~i; i = edge[i].next) {
+        if (!vis[y = edge[i].ed] && disy[y] == disx[x] + 1) {
+            vis[y] = true;
+            if ((~matchy[y]) && disy[y] == dis) continue;
+            if (matchy[y] < 0 || dfs(matchy[y])) {
+                matchx[x] = y; matchy[y] = x;
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+int maxMatch(int v) {
+    int ret = 0, i;
+
+    memset(matchx, -1, sizeof(matchx));
+    memset(matchy, -1, sizeof(matchy));
+    while (bfs(v)) {
+        memset(vis, 0, sizeof(vis));
+        for (i = 0; i < v; ++i) {
+            if (matchx[i] < 0 && dfs(i)) ++ret;
+        }
+    }
+
+    return ret;
+}

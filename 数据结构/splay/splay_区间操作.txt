@@ -1,0 +1,191 @@
+// splay 数列区间操作，rank 从 1 开始
+
+#include <iostream>
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAX 200010
+#define INF 1000000000
+#define R (root->ch[1])
+#define RL (root->ch[1]->ch[0])
+
+using namespace std;
+
+class Splay {
+public:
+    Splay() {
+        root = nil = new Node();
+        nil->ch[0] = nil->ch[1] = nil;
+        nil->key = nil->min = INF; nil->sz = 0;
+        tot = top = idx = 0;
+    }
+    ~Splay() {}
+	
+	// 将数组 [l, r) 区间建树
+    void init(const int *l, const int *r) {
+        tot = top = 0;
+        makeNode(root, INF, nil); makeNode(R, INF, root);
+        makeTree(RL, l, 0, r - l - 1, R);
+        pushUp(R); pushUp(root);
+    }
+	
+	// 清空整棵树
+    void clear() {
+        root = nil;
+        tot = top = 0;
+    }
+	
+	// 在第 k 个数后面插入值为 val 的数
+    void insert(int k, int val) {
+        select(k, nil); select(k + 1, root);
+        makeNode(RL, val, R);
+        pushUp(R); pushUp(root);
+    }
+	
+	// 删除第 k 个数
+    void erase(int k) {
+        select(k - 1, nil); select(k + 1, root);
+        stk[++top] = RL; RL = nil;
+        pushUp(R); pushUp(root);
+    }
+	
+    bool empty() { return root == nil; }
+
+    int size() { return root->sz; }
+	
+	// 选取第 k 个数
+    int select(int k) {
+        select(k, nil);
+        return root->key;
+    }
+	
+	// 将整棵树中的数保存入数组 a 中
+    int getItems(int *a) {
+        idx = 0; getItems(a, root);
+		return root->sz;
+    }
+	
+	// 对 [l, r] 区间内所有数加上 val
+    void addVal(int l, int r, int val) {
+        select(l - 1, nil); select(r + 1, root);
+        RL->add += val; RL->key += val; RL->min += val;
+        pushUp(R); pushUp(root);
+    }
+	
+	// 翻转区间 [l, r]
+    void reverse(int l, int r) {
+        select(l - 1, nil); select(r + 1, root);
+        RL->rev ^= 1;
+    }
+	
+	// 区间 [l, r] 向后轮换 d 个数，向前轮换则 d < 0
+    void revolve(int l, int r, int d) {
+        Node *x;
+        if (!(d = (d % (r - l + 1) + (r - l + 1)) % (r - l + 1))) return;
+        select(l - 1, nil); select(r - d + 1, root);
+        x = RL; RL = nil;
+        pushUp(R); pushUp(root);
+        select(l + d - 1, nil); select(l + d, root);
+        RL = x; x->pre = R;
+        pushUp(R); pushUp(root);
+    }
+
+	// 将 [a, b] 区间切割并放置到 切割后序列的 c 位置后面
+    void cut(int a, int b, int c) {
+        Node *x;
+        select(a - 1, nil); select(b + 1, root);
+        x = RL; RL = nil;
+        pushUp(R); pushUp(root);
+        select(c, nil); select(c + 1, root);
+        RL = x; x->pre = R;
+        pushUp(R); pushUp(root);
+    }
+	
+	// 获得区间 [l, r] 中的最小值
+    int minVal(int l, int r) {
+        select(l - 1, nil); select(r + 1, root);
+        return RL->min;
+    }
+
+private:
+    struct Node {
+        int key, sz, add, rev, min;
+        Node *ch[2], *pre;
+    } v[MAX], *stk[MAX], *root, *nil;
+
+    int tot, top, idx;
+
+    void pushUp(Node *x) {
+        x->sz = x->ch[0]->sz + x->ch[1]->sz + 1;
+        x->min = min(x->key, min(x->ch[0]->min, x->ch[1]->min));
+    }
+
+    void pushDown(Node *x) {
+        if (x->add) {
+            x->ch[0]->add += x->add; x->ch[0]->key += x->add; x->ch[0]->min += x->add;
+            x->ch[1]->add += x->add; x->ch[1]->key += x->add; x->ch[1]->min += x->add;
+            x->add = 0;
+        }
+        if (x->rev) {
+            x->ch[0]->rev ^= 1; x->ch[1]->rev ^= 1;
+            swap(x->ch[0], x->ch[1]); x->rev = 0;
+        }
+    }
+
+    void rotate(Node *x, int d) {
+        Node *y = x->pre;
+        pushDown(y); pushDown(x);
+        if (y->ch[d ^ 1] = x->ch[d]) x->ch[d]->pre = y;
+        if (x->pre = y->pre) y->pre->ch[y->pre->ch[1] == y] = x;
+        x->ch[d] = y; y->pre = x; pushUp(y);
+    }
+
+    void splay(Node *x, const Node *p) {
+        Node *y;
+        int d;
+        for (pushDown(x); (y = x->pre) != p; ) {
+            if (y->pre == p) rotate(x, y->ch[0] == x);
+            else {
+                d = (y->pre->ch[0] == y);
+                rotate(y->ch[d] == x ? x : y, d ^ (y->ch[d] == x));
+                rotate(x, d);
+            }
+        }
+        pushUp(x);
+        if (p == nil) root = x;
+    }
+
+	void select(int k, const Node *p) {
+		Node *x = root;
+		int d;
+		for (pushDown(x); x->ch[0]->sz != k; pushDown(x = x->ch[d])) {
+            if (d = (x->ch[0]->sz < k)) k -= x->ch[0]->sz + 1;
+		}
+		splay(x, p);
+	}
+
+	void makeNode(Node *&x, int k, Node *p) {
+        x = top ? stk[top--] : v + tot++;
+        x->key = x->min = k; x->sz = 1;
+        x->ch[0] = x->ch[1] = nil; x->pre = p;
+        x->add = x->rev = 0;
+	}
+
+    void makeTree(Node *&x, const int *a, int l, int r, Node *p) {
+        int mid = (l + r) >> 1;
+        makeNode(x, a[mid], p);
+        if (l < mid) makeTree(x->ch[0], a, l, mid - 1, x);
+        if (mid < r) makeTree(x->ch[1], a, mid + 1, r, x);
+        pushUp(x);
+    }
+
+    void getItems(int *a, Node *x) {
+        if (x == nil) return;
+        pushDown(x);
+        getItems(a, x->ch[0]);
+        a[idx++] = x->key;
+        getItems(a, x->ch[1]);
+    }
+
+} spt;

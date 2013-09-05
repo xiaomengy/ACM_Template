@@ -1,0 +1,47 @@
+//求解 x^2 - N * y^2 = 1 且 n 不是完全平方数
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+typedef unsigned long long u64;
+
+using namespace std;
+
+u64 intSqrt(u64 n) {
+	int x, y = n;
+	
+	if (!n) return 0;
+	do {
+		x = y;
+		y = (x + n / x) >> 1;
+	}
+	while (y < x);
+	
+	return x;
+}
+
+void pell(u64 n, u64 &x, u64 &y) {
+    u64 p0, p1, p2, q0, q1, q2, a0, a, g0, g1, h0, h1;
+
+    p0 = 0; p1 = 1;
+    q0 = 1; q1 = 0;
+    a = a0 = intSqrt(n);
+    g0 = 0; h0 = 1;
+    while (1) {
+        g1 = -g0 + a * h0;
+        h1 = (n - g1 * g1) / h0;
+        p2 = a * p1 + p0;
+        q2 = a * q1 + q0;
+        if (p2 * p2 - n * q2 * q2 == 1) {
+            x = p2; y = q2;
+            return;
+        }
+        a = (g1 + a0) / h1;
+        p0 = p1; p1 = p2;
+        q0 = q1; q1 = q2;
+        g0 = g1; h0 = h1;
+    }
+}
+
+

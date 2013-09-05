@@ -1,0 +1,124 @@
+// Dancing Links 标准 ECP 模板
+// 行列编号均从1开始，且建立链表过程中必须按原始矩阵从左上到右下顺序插入节点
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAXC 1010
+#define MAXR 1010
+#define MAX 200100
+
+using namespace std;
+
+int L[MAX], R[MAX], U[MAX], D[MAX], S[MAXC], O[MAXR], X[MAX], Y[MAX];
+int head, tot, cnt, rhead[MAXR];
+
+void init(int c) {
+    int i;
+
+    head = 0;
+    L[head] = R[head] = head;
+    for (i = 1; i <= c; i++) {
+        L[i] = i - 1;
+        R[i] = R[L[i]];
+        L[R[i]] = R[L[i]] = i;
+        U[i] = D[i] = i;
+        X[i] = 0; Y[i] = i; S[i] = 0;
+    }
+    memset(rhead, -1, sizeof(rhead));
+    tot = c;
+}
+
+void insert(int x, int y) {
+    tot++;
+    if (rhead[x] < 0) {
+        rhead[x] = tot;
+        L[tot] = R[tot] = tot;
+    } else {
+        L[tot] = L[rhead[x]];
+        R[tot] = rhead[x];
+        L[R[tot]] = R[L[tot]] = tot;
+    }
+    U[tot] = U[y];
+    D[tot] = y;
+    U[D[tot]] = D[U[tot]] = tot;
+    X[tot] = x;
+    Y[tot] = y;
+    S[y]++;
+}
+
+void cover(int c) {
+    int i, j;
+
+    L[R[c]] = L[c];
+    R[L[c]] = R[c];
+    for (i = D[c]; i != c; i = D[i]) {
+        for (j = R[i]; j != i; j = R[j]) {
+            U[D[j]] = U[j];
+            D[U[j]] = D[j];
+            --S[Y[j]];
+        }
+    }
+}
+
+void recover(int c) {
+    int i, j;
+
+    for (i = U[c]; i != c; i = U[i]) {
+        for (j = L[i]; j != i; j = L[j]) {
+            U[D[j]] = D[U[j]] = j;
+            ++S[Y[j]];
+        }
+    }
+    L[R[c]] = R[L[c]] = c;
+}
+
+bool dlx(int dep) {
+    int i, j, c, m = MAXR + 1;
+
+    if (R[head] == head) {
+        cnt = dep;
+        return true;
+    }
+    for (i = R[head]; i != head; i = R[i]) {
+        if (m > S[i]) {
+            m = S[i];
+            c = i;
+        }
+    }
+
+    cover(c);
+    for (i = D[c]; i != c; i = D[i]) {
+        for (j = R[i]; j != i; j = R[j]) cover(Y[j]);
+        O[dep] = X[i];
+        if (dlx(dep + 1)) return true;
+        for (j = L[i]; j != i; j = L[j]) recover(Y[j]);
+    }
+    recover(c);
+
+    return false;
+}
+
+int main() {
+    int n, m, s, i, j, x;
+
+    while (scanf("%d %d", &n, &m) == 2) {
+        init(m);
+        for (i = 1; i <= n; i++) {
+            scanf("%d", &s);
+            for (j = 0; j < s; j++) {
+                scanf("%d", &x);
+                insert(i, x);
+            }
+        }
+        if (!dlx(0)) printf("NO\n");
+        else {
+            printf("%d", cnt);
+            for (i = 0; i < cnt; i++) printf(" %d", O[i]);
+            printf("\n");
+        }
+    }
+
+    return 0;
+}

@@ -1,0 +1,138 @@
+// DLX½âÊý¶À£¬ POJ3074
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+
+#define N 9
+#define SN 3
+#define MAXC 324
+#define MAXR 729
+#define MAX 300100
+
+using namespace std;
+
+int L[MAX], R[MAX], U[MAX], D[MAX], S[MAXC + 1], O[MAXR + 1], X[MAX], Y[MAX];
+int head, tot, cnt, rhead[MAXR + 1];
+
+bool bitMap[MAXR + 1][MAXC + 1];
+char buff[100];
+
+void init(int c) {
+    int i;
+
+    head = 0;
+    L[head] = R[head] = head;
+    for (i = 1; i <= c; i++) {
+        L[i] = i - 1;
+        R[i] = R[L[i]];
+        L[R[i]] = R[L[i]] = i;
+        U[i] = D[i] = i;
+        X[i] = 0;
+        Y[i] = i;
+        S[i] = 0;
+    }
+    memset(rhead, -1, sizeof(rhead));
+    tot = c;
+}
+
+void insert(int x, int y) {
+    tot++;
+    if (rhead[x] < 0) {
+        rhead[x] = tot;
+        L[tot] = R[tot] = tot;
+    } else {
+        L[tot] = L[rhead[x]];
+        R[tot] = rhead[x];
+        L[R[tot]] = R[L[tot]] = tot;
+    }
+    U[tot] = U[y];
+    D[tot] = y;
+    U[D[tot]] = D[U[tot]] = tot;
+    X[tot] = x;
+    Y[tot] = y;
+    S[y]++;
+}
+
+void cover(int c) {
+    int i, j;
+
+    L[R[c]] = L[c];
+    R[L[c]] = R[c];
+    for (i = D[c]; i != c; i = D[i]) {
+        for (j = R[i]; j != i; j = R[j]) {
+            U[D[j]] = U[j];
+            D[U[j]] = D[j];
+            S[Y[j]]--;
+        }
+    }
+}
+
+void recover(int c) {
+    int i, j;
+
+    for (i = U[c]; i != c; i = U[i]) {
+        for (j = L[i]; j != i; j = L[j]) {
+            U[D[j]] = D[U[j]] = j;
+            S[Y[j]]++;
+        }
+    }
+    L[R[c]] = R[L[c]] = c;
+}
+
+bool dlx(int dep) {
+    int i, j, c, m = MAXR + 1;
+
+    if (R[head] == head) {
+        cnt = dep;
+        return true;
+    }
+    for (i = R[head]; i != head; i = R[i]) {
+        if (m > S[i]) {
+            m = S[i];
+            c = i;
+        }
+    }
+
+    cover(c);
+    for (i = D[c]; i != c; i = D[i]) {
+        for (j = R[i]; j != i; j = R[j]) cover(Y[j]);
+        O[dep] = X[i];
+        if (dlx(dep + 1)) return true;
+        for (j = L[i]; j != i; j = L[j]) recover(Y[j]);
+    }
+    recover(c);
+
+    return false;
+}
+
+int main() {
+    int i, r, c, tr, tc, val;
+
+    while (scanf("%s", buff) && strcmp(buff, "end")) {
+        init(MAXC);
+        for (i = 0; i < N * N * N; i++) {
+            r = i / N / N % N;
+            c = i / N % N;
+            val = i % N + 1;
+            if (buff[r * N + c] == '.' || buff[r * N + c] - '0' == val) {
+                insert(i + 1, r * N + val);
+                insert(i + 1, c * N + val + N * N);
+                tr = r / SN;
+                tc = c / SN;
+                insert(i + 1, (tr * SN + tc) * N + val + N * N * 2);
+                insert(i + 1, r * N + c + 1 + N * N * 3);
+            }
+        }
+
+        dlx(0);
+        sort(O, O + cnt);
+        for (i = 0; i < cnt; i++) {
+            printf("%d", (O[i] - 1) % N + 1);
+        }
+        printf("\n");
+    }
+
+    return 0;
+}

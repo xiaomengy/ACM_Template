@@ -1,0 +1,63 @@
+// 有向图强连通分量 Kosaraju 算法
+// scc 函数返回值为 scc 总数
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAXV 10010
+#define MAXE 100010
+
+using namespace std;
+
+struct Edge {
+    int ed, next;
+} edgex[MAXE], edgey[MAXE];
+
+int headx[MAXV], heady[MAXV], nEdge;
+int sid[MAXV], vs[MAXV], idx;
+bool vis[MAXV];
+
+void init() {
+    memset(headx, -1, sizeof(headx));
+    memset(heady, -1, sizeof(heady));
+    nEdge = 0;
+}
+
+void addEdge(int a, int b) {
+    edgex[nEdge].ed = b; edgex[nEdge].next = headx[a];
+    edgey[nEdge].ed = a; edgey[nEdge].next = heady[b];
+    headx[a] = heady[b] = nEdge++;
+}
+
+void dfsx(int x) {
+    int i;
+    vis[x] = true;
+    for (i = headx[x]; ~i; i = edgex[i].next) {
+        if (!vis[edgex[i].ed]) dfsx(edgex[i].ed);
+    }
+    vs[--idx] = x;
+}
+
+void dfsy(int x, int k) {
+    int i;
+    vis[x] = true; sid[x] = k;
+    for (i = heady[x]; ~i; i = edgey[i].next) {
+        if (!vis[edgey[i].ed]) dfsy(edgey[i].ed, k);
+    }
+}
+
+int scc(int v) {
+    int i, scnt = 0;
+
+    memset(vis, 0, sizeof(vis));
+    for (idx = v, i = 0; i < v; ++i) {
+        if (!vis[i]) dfsx(i);
+    }
+    memset(vis, 0, sizeof(vis));
+    for (i = 0; i < v; ++i) {
+        if (!vis[vs[i]]) dfsy(vs[i], scnt++);
+    }
+
+    return scnt;
+}

@@ -1,0 +1,63 @@
+// polya计数法求长为n变形被c种颜色染色的不同染色数
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAX 10010
+#define MOD 1000000007
+
+using namespace std;
+
+typedef __int64 i64;
+
+int a[MAX], p[MAX], phi[MAX];
+
+void prime() {
+    int i, j, n = 0;
+
+    phi[1] = 1;
+    for (i = 2; i < MAX; ++i) {
+        if (!a[i]) {
+            a[i] = p[n++] = i;
+            phi[i] = i - 1;
+        }
+        for (j = 0; j < n && i * p[j] < MAX; ++j) {
+            a[i * p[j]] = p[j];
+            if (i % p[j]) phi[i * p[j]] = phi[i] * (p[j] - 1);
+            else {
+                phi[i * p[j]] = phi[i] * p[j];
+                break;
+            }
+        }
+    }
+}
+
+i64 modPow(i64 a, i64 b, i64 p) {
+    i64 ret;
+
+    for (ret = 1; b; b >>= 1) {
+        if (b & 1) ret = (ret * a) % p;
+        a = (a * a) % p;
+    }
+
+    return ret;
+}
+
+i64 poly(int n, int c) {
+    int i;
+    i64 ret = 0;
+
+    for (i = 1; i * i <= n; ++i) {
+        if (!(n % i)) {
+            ret = (ret + phi[n / i] * modPow(c, i, MOD) % MOD) % MOD;
+            if (i * i != n) {
+                ret = (ret + phi[i] * modPow(c, n / i, MOD) % MOD) % MOD;
+            }
+        }
+    }
+    if (n & 1) ret = (ret + n * modPow(c, n / 2 + 1, MOD)) % MOD;
+    else ret = (ret + n / 2 * (modPow(c, n / 2, MOD) + modPow(c, n / 2 + 1, MOD)) % MOD) % MOD;
+
+    return ret * modPow(2 * n, MOD - 2, MOD) % MOD;
+}

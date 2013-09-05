@@ -1,0 +1,89 @@
+// 树链剖分，点权路径修改，单点查询
+// 点编号从0开始，需要输入点vx，表示点权
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAX 0x20000
+
+using namespace std;
+
+struct HLD {
+    struct Edge {
+        int ed, next;
+    } edge[MAX << 1];
+
+    int vx[MAX], head[MAX], v, nEdge, totw;
+    int siz[MAX], dep[MAX], top[MAX], par[MAX], son[MAX], w[MAX];
+    int st[MAX], M;
+
+    void _dfs1(int x, int pre, int d) {
+        int i, y;
+        siz[x] = 1; son[x] = -1; par[x] = pre; dep[x] = d;
+        for (i = head[x]; ~i; i = edge[i].next) {
+            if ((y = edge[i].ed) != pre) {
+                _dfs1(y, x, d + 1);
+                siz[x] += siz[y];
+                if (son[x] == -1 || siz[son[x]] < siz[y]) son[x] = y;
+            }
+        }
+    }
+
+    void _dfs2(int x, int tp) {
+        int i, y;
+        w[x] = ++totw; top[x] = tp;
+        if (~son[x]) _dfs2(son[x], tp);
+        for (i = head[x]; ~i; i = edge[i].next) {
+            if ((y = edge[i].ed) != par[x] && y != son[x]) _dfs2(y, y);
+        }
+    }
+
+    void _update(int l, int r, int val) {
+        for (l = (l | M) - 1, r = (r | M) + 1; l ^ r ^ 1; l >>= 1, r >>= 1) {
+            if (~l & 1) st[l ^ 1] += val;
+            if ( r & 1) st[r ^ 1] += val;
+        }
+    }
+
+    int _query(int k) {
+        int ret = 0;
+        for (k = (k | M); k; k >>= 1) ret += st[k];
+        return ret;
+    }
+
+    void init(int n) {
+        memset(head, -1, sizeof(head));
+        v = n; nEdge = totw = 0;
+    }
+
+    void addEdge(int a, int b) {
+        edge[nEdge].ed = b; edge[nEdge].next = head[a]; head[a] = nEdge++;
+        edge[nEdge].ed = a; edge[nEdge].next = head[b]; head[b] = nEdge++;
+    }
+
+    void makeTree() {
+        _dfs1(0, -1, 0); _dfs2(0, 0);
+        for (M = 1; M < v + 2; M <<= 1);
+        memset(st, 0, sizeof(st));
+        for (int i = 0; i < v; ++i) st[w[i] | M] = vx[i];
+    }
+
+    void update(int u, int v, int val) {
+        int tu = top[u], tv = top[v];
+
+        while (tu != tv) {
+            if (dep[tu] < dep[tv]) {
+                swap(u, v); swap(tu, tv);
+            }
+            _update(w[tu], w[u], val);
+            u = par[tu]; tu = top[u];
+        }
+        if (dep[u] > dep[v]) swap(u, v);
+        _update(w[u], w[v], val);
+    }
+
+    int query(int k) {
+        return _query(w[k]);
+    }
+} tree;

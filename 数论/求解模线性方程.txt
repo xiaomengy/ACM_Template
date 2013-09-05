@@ -1,0 +1,27 @@
+//求解模线性方程
+
+//扩展欧几里得算法
+i64 extEuclid(i64 a, i64 b, i64 &x, i64 &y) {
+    i64 r, t;
+
+    if (!b) {
+        x = 1; y = 0;
+        return a;
+    }
+    r = extEuclid(b, a % b, x, y);
+    t = x; x = y; y = t - a / b * y;
+
+    return r;
+}
+
+//求解 ax = b mod n, ans = -1代表无解
+i64 modEquation(i64 a, i64 b, i64 n) {
+    i64 d, x, y;
+
+    d = extEuclid(a, n, x, y);
+    if (b % d) return -1;
+    x = x * (b / d);
+    x = (x % (n / d) + (n / d)) % (n / d);
+
+    return x;
+}

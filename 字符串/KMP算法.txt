@@ -1,0 +1,38 @@
+// kmp算法
+// 模板为统计 p 在 t 中出现的次数
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAXT 1000100
+#define MAXP 1100
+
+using namespace std;
+
+char t[MAXT], p[MAXP];
+int fail[MAXP];
+
+void getFail(const char *p, int *fail) {
+    int i, j = -1;
+
+    for (i = 0; p[i]; ++i, ++j) {
+		fail[i] = (~j && p[i] == p[j]) ? fail[j] : j;
+        while (~j && p[i] != p[j]) j = fail[j];
+    }
+    fail[i] = j;
+}
+
+int kmp(const char *p, const char *t, int *fail) {
+    int i, j = 0, ret = 0;
+
+	getFail(p, fail);
+    for (i = 0; t[i]; ++i) {
+        while (~j && t[i] != p[j]) j = fail[j];
+		if (!p[++j]) {
+		    ++ret; j = fail[j];
+		}
+    }
+
+    return ret;
+}

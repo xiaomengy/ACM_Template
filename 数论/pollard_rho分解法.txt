@@ -1,0 +1,64 @@
+// pollard_rho 因式分解法，使用前需要 srand()
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
+#include <ctime>
+
+#define C 16381
+#define MASK 0x7fffffffffffffffLL
+
+typedef long long i64;
+
+using namespace std;
+
+i64 randI64(i64 n) {
+    return (((i64)rand() * (i64)rand() * (i64)rand() * (i64)rand()) & MASK) % n;
+}
+
+i64 modMul(i64 a, i64 b, i64 p) {
+    i64 ret = 0, tmp;
+
+    for (tmp = a % p; b; b >>= 1) {
+        if (b & 1) ret = (ret + tmp) % p;
+        tmp = (tmp << 1) % p;
+    }
+
+    return ret;
+}
+
+i64 modPow(i64 a, i64 b, i64 p) {
+    i64 ret = 1, tmp;
+
+    for (tmp = a % p; b; b >>= 1) {
+        if (b & 1) ret = modMul(ret, tmp, p);
+        tmp = modMul(tmp, tmp, p);
+    }
+
+    return ret;
+}
+
+i64 gcd(i64 a, i64 b) {
+    return b ? gcd(b, a % b) : a;
+}
+
+i64 pollard_rho(i64 n) {
+    i64 x, y, d, k = 2, i = 1, c;
+
+    for (c = C; ; --c) {
+        y = x = randI64(n - 1) + 1;
+        while (1) {
+            i++;
+            x = (modMul(x, x, n) + c) % n;
+            d = gcd(y - x + n, n);
+            if (d != 1 && d != n) return d;
+            if (y == x) break;
+            if (i == k) {
+                y = x; k <<= 1;
+            }
+        }
+    }
+
+    return n;
+}

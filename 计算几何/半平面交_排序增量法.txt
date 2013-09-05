@@ -1,0 +1,122 @@
+// 半平面交_排序增量法_O(nlogn)
+// 返回 true 表示 <= 不等式存在解，< 需要用可行域面积 > 0 判定 
+// init 函数根据需要修改，加入可行域外边框，默认为加入 INF
+// hull 记录了结果点集，cnt为总点数，hull[cnt] = hull[0]
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <cmath>
+#include <algorithm>
+
+#define MAX 10010
+#define INF 1000000000
+#define ZERO(x) (fabs(x) < eps)
+#define EQ(x, y) (fabs((x) - (y)) < eps)
+
+using namespace std;
+
+const double eps = 1e-8;
+
+struct Point {
+    double x, y;
+
+    Point() {}
+    Point(double _x, double _y) : x(_x), y(_y) {}
+
+    bool operator ==(const Point &p) const {
+        return EQ(x, p.x) && EQ(y, p.y);
+    }
+
+    Point operator -(const Point &p) const {
+        return Point(x - p.x, y - p.y);
+    }
+
+    double xMul(const Point &p) const {
+        return x * p.y - y * p.x;
+    }
+} hull[MAX];
+
+int cnt;
+
+struct Hvec {
+    Point u, v;
+    double ang;
+} h[MAX];
+
+int que[MAX], front, tail, nHvec;
+
+double u[MAX], v[MAX], w[MAX];
+
+bool cmp(const Hvec &a, const Hvec &b) {
+    return EQ(a.ang, b.ang) ? (b.v - b.u).xMul(a.v - b.u) >= 0 : a.ang < b.ang;
+}
+
+bool isOut(const Hvec &h, const Point &p) {
+    return (p - h.u).xMul(h.v - h.u) > 0;
+}
+
+bool parallel(const Hvec &a, const Hvec &b) {
+    return ZERO((a.v - a.u).xMul(b.v - b.u));
+}
+
+Point inter(const Hvec &a, const Hvec &b) {
+    double s1 = (b.v - a.u).xMul(b.u - a.u), s2 = (b.u - a.v).xMul(b.v - a.v);
+    return Point((a.u.x * s2 + a.v.x * s1) / (s2 + s1), (a.u.y * s2 + a.v.y * s1) / (s2 + s1));
+}
+
+// 根据两点添加约束，可行域在 a->b 左侧
+void addHvec(const Point &a, const Point &b) {
+    h[nHvec].u = a; h[nHvec].v = b;
+    h[nHvec++].ang = atan2(b.y - a.y, b.x - a.x);
+}
+
+// 根据不等式添加约束 ax + by + c < 0，其中 a b 不能同时为 0
+void addHvec(double a, double b, double c) {
+    if (ZERO(a)) {
+        addHvec(Point(b > 0, -c / b), Point(b < 0, -c / b));
+    } else if (ZERO(b)) {
+        addHvec(Point(-c / a, a < 0), Point(-c / a, a > 0));
+    } else if (ZERO(c)) {
+        addHvec(Point(0, 0), Point(-b, a));
+    } else {
+        if ((a > 0) ^ (b > 0) ^ (c > 0)) addHvec(Point(0, -c / b), Point(-c / a, 0));
+        else addHvec(Point(-c / a, 0), Point(0, -c / b));
+    }
+}
+
+void init() {
+    nHvec = 0;
+    addHvec(Point(-INF, -INF), Point(INF, -INF)),
+    addHvec(Point(INF, -INF), Point(INF, INF)),
+    addHvec(Point(INF, INF), Point(-INF, INF)),
+    addHvec(Point(-INF, INF), Point(-INF, -INF));
+}
+
+bool hvecInt() {
+    int i, s;
+
+    sort(h, h + nHvec, cmp);
+    for (s = i = 1; i < nHvec; ++i) {
+        if (!EQ(h[i].ang, h[i - 1].ang)) h[s++] = h[i];
+    }
+    cnt = front = tail = 0;
+    que[tail++] = 0; que[tail++] = 1;
+    for (i = 2; i < s; ++i) {
+        while (tail - front > 1 && isOut(h[i], inter(h[que[tail - 1]], h[que[tail - 2]]))) --tail;
+        while (tail - front > 1 && isOut(h[i], inter(h[que[front]], h[que[front + 1]]))) ++front;
+        if (parallel(h[i], h[que[tail - 1]])) return false;
+        que[tail++] = i;
+    }
+    while (tail - front > 1 && isOut(h[que[front]], inter(h[que[tail - 1]], h[que[tail - 2]]))) --tail;
+    while (tail - front > 1 && isOut(h[que[tail - 1]], inter(h[que[front]], h[que[front + 1]]))) ++front;
+
+    if (tail - front < 3) return false;
+    for (i = front; i < tail - 1; ++i) hull[cnt++] = inter(h[que[i]], h[que[i + 1]]);
+    hull[cnt++] = inter(h[que[front]], h[que[tail - 1]]);
+    cnt = unique(hull, hull + cnt) - hull;
+	if (cnt > 1 && hull[0] == hull[cnt - 1]) --cnt;
+    else hull[cnt] = hull[0];
+
+    return true;
+}

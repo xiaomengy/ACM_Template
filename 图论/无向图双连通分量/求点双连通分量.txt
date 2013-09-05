@@ -1,0 +1,76 @@
+// 求点双连通分量，同时求出割点
+// bid[i] 表示第i条边所属的双连通分量
+// cnt[i] = k 表示去掉i以后可能得到 k + 1 个连通块，也就是 cnt[i] > 0 为割点
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAXV 1010
+#define MAXE 1000100
+
+using namespace std;
+
+struct Edge {
+    int ed, next;
+} edge[MAXE];
+
+int head[MAXV], nEdge;
+int dfn[MAXV], low[MAXV], cnt[MAXV], idx, root;
+int bid[MAXE], bcnt, stk[MAXE], top;
+
+void init() {
+    memset(head, -1, sizeof(head));
+    nEdge = 0;
+}
+
+void addEdge(int a, int b) {
+    edge[nEdge].ed = b;
+    edge[nEdge].next = head[a];
+    head[a] = nEdge++;
+    edge[nEdge].ed = a;
+    edge[nEdge].next = head[b];
+    head[b] = nEdge++;
+}
+
+void getBcc(int x) {
+    int y;
+    do {
+        bid[y = stk[top--]] = bid[y ^ 1] = bcnt;
+    } while (y != x);
+    ++bcnt;
+}
+
+void tarjan(int x, int p) {
+    int i, y, deg = 0;
+
+    dfn[x] = low[x] = idx++;
+    for (i = head[x]; ~i; i = edge[i].next) {
+        if ((y = edge[i].ed) ^ p) {
+            ++deg;
+            if (dfn[y] < dfn[x]) stk[++top] = i;
+            if (~dfn[y]) low[x] = min(low[x], dfn[y]);
+            else {
+                tarjan(y, x);
+                low[x] = min(low[x], low[y]);
+                if (x == root) {
+                    getBcc(i);
+                    if (deg > 1) ++cnt[x];
+                } else if (dfn[x] <= low[y]) {
+                    getBcc(i); ++cnt[x];
+                }
+            }
+        }
+    }
+}
+
+void bcc(int v) {
+    int i;
+
+    idx = top = bcnt = 0;
+    memset(dfn, -1, sizeof(dfn));
+    memset(cnt, 0, sizeof(cnt));
+    for (i = 0; i < v; i++) {
+        if (dfn[i] < 0) tarjan(root = i, -1);
+    }
+}

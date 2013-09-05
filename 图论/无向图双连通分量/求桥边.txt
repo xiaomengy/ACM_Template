@@ -1,0 +1,58 @@
+//求无向图桥边，可以处理重边，tag[i] == true 表示 edge[i] 为桥边, 正反向边均有标记
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAXV 20010
+#define MAXE 1000100
+
+using namespace std;
+
+struct Edge {
+    int ed, next;
+} edge[MAXE];
+
+int head[MAXV], nEdge;
+int dfn[MAXV], low[MAXV], idx;
+bool tag[MAXE];
+
+void init() {
+    memset(head, -1, sizeof(head));
+    nEdge = 0;
+}
+
+void addEdge(int a, int b) {
+    edge[nEdge].ed = b;
+    edge[nEdge].next = head[a];
+    head[a] = nEdge++;
+    edge[nEdge].ed = a;
+    edge[nEdge].next = head[b];
+    head[b] = nEdge++;
+}
+
+void tarjan(int x, int p) {
+    int i, y;
+
+    dfn[x] = low[x] = idx++;
+    for (i = head[x]; ~i; i = edge[i].next) {
+        if ((i | 1) ^ (p | 1)) {
+            if (~dfn[y = edge[i].ed]) low[x] = min(low[x], dfn[y]);
+            else {
+                tarjan(y, i);
+                low[x] = min(low[x], low[y]);
+                if (dfn[x] < low[y]) tag[i] = tag[i ^ 1] = true;
+            }
+        }
+    }
+}
+
+void bcc(int v) {
+    int i;
+
+    memset(dfn, -1, sizeof(dfn));
+    memset(tag, 0, sizeof(tag));
+    for (idx = i = 0; i < v; ++i) {
+        if (dfn[i] < 0) tarjan(i, -1);
+    }
+}

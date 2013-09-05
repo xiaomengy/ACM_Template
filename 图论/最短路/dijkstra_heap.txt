@@ -1,0 +1,55 @@
+// dijkstra + heap
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <utility>
+#include <queue>
+
+#define MAXV 10010
+#define MAXE 1000100
+#define INF 0x3F3F3F3F
+
+using namespace std;
+
+struct Edge {
+    int ed, val, next;
+} edge[MAXE];
+
+int head[MAXV], nEdge;
+int dis[MAXV];
+bool vis[MAXV];
+
+priority_queue< pair<int, int> > que;
+
+void init() {
+    memset(head, -1, sizeof(head));
+    nEdge = 0;
+}
+
+void addEdge(int a, int b, int v) {
+    edge[nEdge].ed = b;
+    edge[nEdge].val = v;
+    edge[nEdge].next = head[a];
+    head[a] = nEdge++;
+}
+
+int dijkstra(int v, int src, int dst) {
+    int i, x, y;
+
+    memset(dis, 0x3F, sizeof(dis));
+    memset(vis, 0, sizeof(vis));
+	while (!que.empty()) que.pop();
+    que.push(make_pair(dis[src] = 0, src));
+    while (!que.empty()) {
+        x = que.top().second; que.pop();
+        if (vis[x]) continue;
+        for (vis[x] = true, i = head[x]; ~i; i = edge[i].next) {
+            if (!vis[y = edge[i].ed] && dis[y] > dis[x] + edge[i].val) {
+                que.push(make_pair(-(dis[y] = dis[x] + edge[i].val), y));
+            }
+        }
+    }
+
+    return dis[dst];
+}

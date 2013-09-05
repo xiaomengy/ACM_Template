@@ -1,0 +1,48 @@
+// 静态二叉树维护区间和
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAX 200010
+#define LC(x) ((x) << 1)
+#define RC(x) (((x) << 1) | 1)
+
+using namespace std;
+
+struct SBT {
+    int key, val, sum;
+} sbt[MAX];
+
+int tot, idx;
+
+int rank[MAX], val[MAX], ans[MAX];
+
+void init(int n) {
+    tot = n; idx = 0;
+}
+
+void pushUp(int x) {
+    sbt[x].sum = sbt[x].val;
+    if (LC(x) <= tot) sbt[x].sum += sbt[LC(x)].sum;
+    if (RC(x) <= tot) sbt[x].sum += sbt[RC(x)].sum;
+}
+
+void build(int x) {
+    if (LC(x) <= tot) build(LC(x));
+    sbt[x].key = idx++;
+    sbt[x].val = 1;
+    if (RC(x) <= tot) build(RC(x));
+    pushUp(x);
+}
+
+void update(int id, int val) {
+    int x = 1;
+
+    while (1) {
+        if (id < sbt[x].key) x = LC(x);
+        else if (sbt[x].key < id) x = RC(x);
+        else break;
+    }
+    for (sbt[x].val = val; x; x >>= 1) pushUp(x);
+}

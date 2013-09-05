@@ -1,0 +1,51 @@
+//大组合数取模
+//求c(n, m) % p的值，p为素数
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAX 100010
+
+typedef __int64 i64;
+
+using namespace std;
+
+i64 fact[MAX];
+
+void init(i64 p) {
+    int i;
+
+    for (i = fact[0] = 1; i < p; ++i) {
+        fact[i] = fact[i - 1] * i % p;
+    }
+}
+
+i64 modPow(i64 a, i64 b, i64 p) {
+    i64 ret;
+
+    for (ret = 1; b; b >>= 1) {
+        if (b & 1) ret = (ret * a) % p;
+        a = (a * a) % p;
+    }
+
+    return ret;
+}
+
+i64 cal(i64 n, i64 m, i64 p) {
+    return n < m ? 0 : fact[n] * modPow(fact[m] * fact[n - m] % p, p - 2, p) % p;
+}
+
+i64 lucas(i64 n, i64 m, i64 p) {
+    i64 ret = 1;
+
+    if (n < m) return 0;
+    init(p);
+    while (n && m && ret) {
+        ret = ret * cal(n % p, m % p, p) % p;
+        n /= p; m /= p;
+    }
+
+    return ret;
+}
+

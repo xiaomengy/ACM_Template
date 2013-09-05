@@ -1,0 +1,63 @@
+// ÇóÍ¹°ü_¼«½ÇÐò
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <cmath>
+#include <algorithm>
+
+#define MAX 100010
+#define EQ(x, y) (fabs((x) - (y)) < eps)
+
+using namespace std;
+
+const double Pi = acos(-1.0);
+const double eps = 1e-8;
+
+struct Point {
+    double x, y;
+
+	Point() {}
+    Point(double _x, double _y) : x(_x), y(_y) {}
+
+    Point operator -(const Point &p) const {
+        return Point(x - p.x, y - p.y);
+    }
+
+    double xMul(const Point &p) const {
+        return x * p.y - y * p.x;
+    }
+} p[MAX], hull[MAX];
+
+double dis(const Point &a, const Point &b) {
+    return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
+}
+
+bool cmp(const Point &a, const Point &b) {
+    double _a = atan2(a.y - p[0].y, a.x - p[0].x);
+    double _b = atan2(b.y - p[0].y, b.x - p[0].x);
+    return EQ(_a, _b) ? dis(a, p[0]) < dis(b, p[0]) : _a < _b;
+}
+
+bool check(const Point &a, const Point &b, const Point &c) {
+    return (c - a).xMul(b - a) < 0;
+}
+
+int graham(Point *p, int n, Point *hull) {
+    int i, k = 0, cnt = 0;
+
+    for (i = 1; i < n; ++i) {
+        if (p[i].x < p[k].x) k = i;
+        else if (EQ(p[i].x, p[k].x) && p[i].y < p[k].y) k = i;
+    }
+    swap(p[0], p[k]);
+    sort(p + 1, p + n, cmp);
+    for (i = cnt = 0; i < n; ++i) {
+        while (cnt > 1 && !check(hull[cnt - 2], hull[cnt - 1], p[i])) --cnt;
+        hull[cnt++] = p[i];
+    }
+    hull[cnt] = hull[0];
+
+	return cnt;
+}
+

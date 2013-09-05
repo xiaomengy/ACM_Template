@@ -1,0 +1,220 @@
+//SBT模板，动态申请内存
+//select 和 rank 操作排名从1开始
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+using namespace std;
+
+template<typename T>
+class SBTree {
+public:
+    SBTree();
+    ~SBTree();
+    void insert(const T &item) { insert(item, root); }
+    void erase(const T &item) { erase(item, root); }
+    int size() { return root->tot; }
+    bool empty() { return root == nullNode; }
+    void clear();
+    bool find(const T &item);
+    const T &maxNum();
+    const T &minNum();
+    const T &select(int r);
+    int rank(const T &item);
+
+private:
+    struct SBTNode {
+        T key;
+        int tot;
+        SBTNode *left, *right;
+        SBTNode() {}
+        SBTNode(const T &x, int s, SBTNode *&l, SBTNode *&r) :
+            key(x), tot(s), left(l), right(r) {}
+    } *root, *nullNode;
+
+    void leftRotate(SBTNode *&x);
+    void rightRotate(SBTNode *&x);
+    void insert(const T &item, SBTNode *&x);
+    void erase(const T &item, SBTNode *&x);
+    void maintain(SBTNode *&x, bool style);
+    void clear(SBTNode *&x);
+};
+
+template<typename T>
+SBTree<T>::SBTree() {
+    nullNode = new SBTNode();
+    root = nullNode;
+    root->left = root->right = nullNode;
+    root->tot = 0;
+}
+
+template<typename T>
+SBTree<T>::~SBTree() {
+    clear();
+    delete nullNode;
+}
+
+template<typename T>
+void SBTree<T>::clear() {
+    clear(root);
+    root = nullNode;
+}
+
+template<typename T>
+bool SBTree<T>::find(const T &item) {
+    SBTNode *p = root;
+    while (p != nullNode) {
+        if (item < p->key) p = p->left;
+        else if (p->key < item) p = p->right;
+        else return true;
+    }
+    return false;
+}
+
+template<typename T>
+const T &SBTree<T>::maxNum() {
+    SBTNode *p = root;
+    if (root == nullNode) return T();
+    while (p->right != nullNode) p = p->right;
+    return p->key;
+}
+
+template<typename T>
+const T &SBTree<T>::minNum() {
+    SBTNode *p = root;
+    if (root == nullNode) return T();
+    while (p->left != nullNode) p = p->left;
+    return p->key;
+}
+
+template<typename T>
+const T &SBTree<T>::select(int r) {
+    SBTNode *p = root;
+
+    while (1) {
+        if (p->left && p->left->tot + 1 == r) break;
+        if (p->left && r <= p->left->tot) p = p->left;
+        else {
+            r -= (p->left ? p->left->tot : 0) + 1;
+            p = p->right;
+        }
+    }
+
+    return p->key;
+}
+
+template<typename T>
+int SBTree<T>::rank(const T &item) {
+    SBTNode *p = root;
+    int ret = 1;
+
+    while (p != nullNode) {
+        if (item < p->key) p = p->left;
+        else if (p->key < item) {
+            ret += p->left->tot + 1;
+            p = p->right;
+        } else {
+            return ret + p->left->tot;
+        }
+    }
+
+    return ret;
+}
+
+template<typename T>
+void SBTree<T>::leftRotate(SBTNode *&x) {
+    SBTNode *p = x->right;
+
+    x->right = p->left;
+    p->left = x;
+    p->tot = x->tot;
+    x->tot = x->left->tot + x->right->tot + 1;
+    x = p;
+}
+
+template<typename T>
+void SBTree<T>::rightRotate(SBTNode *&x) {
+    SBTNode *p = x->left;
+
+    x->left = p->right;
+    p->right = x;
+    p->tot = x->tot;
+    x->tot = x->left->tot + x->right->tot + 1;
+    x = p;
+}
+
+template<typename T>
+void SBTree<T>::insert(const T &item, SBTNode *&x) {
+    if (x == nullNode) {
+        x = new SBTNode(item, 1, nullNode, nullNode);
+        return;
+    }
+    x->tot++;
+    if (item < x->key) insert(item, x->left);
+    else insert(item, x->right);
+    maintain(x, item < x->key);
+}
+
+template<typename T>
+void SBTree<T>::erase(const T &item, SBTNode *&x) {
+    SBTNode *p;
+
+    if (x == nullNode) return;
+    x->tot--;
+    if (item < x->key) {
+		erase(item, x->left);
+	} else if (x->key < item) {
+		erase(item, x->right);
+	} else {
+        if (x->left != nullNode && x->right == nullNode) {
+            p = x;
+            x = p->left;
+            delete p;
+        } else if (x->left == nullNode && x->right == nullNode) {
+            p = x;
+            x = nullNode;
+            delete p;
+        } else {
+            for (p = x->right; p->left != nullNode; p = p->left);
+            x->key = p->key;
+            erase(p->key, x->right);
+        }
+	}
+}
+
+template<typename T>
+void SBTree<T>::maintain(SBTNode *&x, bool style) {
+    if (x == nullNode) return;
+    if (style) {
+        if (x->right->tot < x->left->left->tot) rightRotate(x);
+        else if (x->right->tot < x->left->right->tot) {
+            leftRotate(x->left);
+            rightRotate(x);
+        } else {
+			return;
+		}
+    } else {
+        if (x->left->tot < x->right->right->tot) leftRotate(x);
+        else if (x->left->tot < x->right->left->tot) {
+            rightRotate(x->right);
+            leftRotate(x);
+        } else {
+			return;
+		}
+    }
+    maintain(x->left, true);
+    maintain(x->right, false);
+    maintain(x, true);
+    maintain(x, false);
+}
+
+template<typename T>
+void SBTree<T>::clear(SBTNode *&x) {
+    if (x != nullNode) {
+        clear(x->left);
+        clear(x->right);
+        delete x;
+    }
+}
+

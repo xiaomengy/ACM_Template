@@ -1,0 +1,72 @@
+// 线段树_区间合并
+// 内存管理
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAX 50010
+#define LC(x) ((x) << 1)
+#define RC(x) (((x) << 1) | 1)
+#define AVG(x, y) (((x) & (y)) + (((x) ^ (y)) >>1))
+#define PAR int x, int l, int r
+#define LL LC(x), l, mid
+#define RR RC(x), mid + 1, r
+
+using namespace std;
+
+struct SegTree {
+    int val, maxl, lm, rm;
+} st[MAX << 2];
+
+void pushUp(int x, int w) {
+    st[x].val = st[LC(x)].val == st[RC(x)].val ? st[LC(x)].val : -1;
+    st[x].lm = st[LC(x)].lm;
+    st[x].rm = st[RC(x)].rm;
+    if (st[x].lm == (w - (w >> 1))) st[x].lm += st[RC(x)].lm;
+    if (st[x].rm == (w >> 1)) st[x].rm += st[LC(x)].rm;
+    st[x].maxl = max(max(st[LC(x)].maxl, st[RC(x)].maxl), st[LC(x)].rm + st[RC(x)].lm);
+}
+
+void pushDown(int x, int w) {
+    if (~st[x].val) {
+        st[LC(x)].val = st[RC(x)].val = st[x].val;
+        st[LC(x)].maxl = st[LC(x)].lm = st[LC(x)].rm = st[x].val ? 0 : (w - (w >> 1));
+        st[RC(x)].maxl = st[RC(x)].lm = st[RC(x)].rm = st[x].val ? 0 : (w >> 1);
+    }
+}
+
+void build(PAR) {
+    int mid = AVG(l, r);
+
+    st[x].val = 0;
+    st[x].maxl = st[x].lm = st[x].rm = r - l + 1;
+    if (l < r) {
+        build(LL);
+        build(RR);
+    }
+}
+
+void update(PAR, int low, int high, int val) {
+    int mid = AVG(l, r);
+
+    if (low <= l && r <= high) {
+        st[x].val = val;
+        st[x].maxl = st[x].lm = st[x].rm = val ? 0 : r - l + 1;
+        return;
+    }
+    pushDown(x, r - l + 1);
+    if (low <= mid) update(LL, low, high, val);
+    if (high > mid) update(RR, low, high, val);
+    pushUp(x, r - l + 1);
+}
+
+int query(PAR, int w) {
+    int mid = AVG(l, r);
+
+    if (l == r) return l;
+    pushDown(x, r - l + 1);
+    if (st[LC(x)].maxl >= w) return query(LL, w);
+    if (st[LC(x)].rm + st[RC(x)].lm >= w) return mid - st[LC(x)].rm + 1;
+    return query(RR, w);
+}

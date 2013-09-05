@@ -1,0 +1,85 @@
+// 2-SAT 问题判定求解
+// 使用 Kosaraju 算法两次 dfs 求 scc
+// 注意 MAXV 为变量数两倍, getAns(i) 表示 xi 的一个可行解
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAXV 2048
+#define MAXE 200010
+#define T(x) ((x) << 1)
+#define F(x) (((x) << 1) | 1)
+
+using namespace std;
+
+struct _2SAT {
+    struct Edge {
+        int ed, next;
+    } edgex[MAXE], edgey[MAXE];
+
+    int headx[MAXV], heady[MAXV], n, nv, ne;
+    int sid[MAXV], vs[MAXV], scnt, idx;
+    bool vis[MAXV];
+
+    void init(int _n) {
+        memset(headx, -1, sizeof(headx));
+        memset(heady, -1, sizeof(heady));
+        n = _n; nv = (n << 1); ne = 0;
+    }
+
+    void addEdge(int a, int b) {
+        edgex[ne].ed = b; edgex[ne].next = headx[a];
+        edgey[ne].ed = a; edgey[ne].next = heady[b];
+        headx[a] = heady[b] = ne++;
+    }
+
+    void addOR(int a, int b) {
+        addEdge(a ^ 1, b); addEdge(b ^ 1, a);
+    }
+
+    void addAND(int a, int b) {
+        addEdge(a ^ 1, a); addEdge(b ^ 1, b);
+    }
+
+    void addXOR(int a, int b) {
+        addOR(a, b); addOR(a ^ 1, b ^ 1);
+    }
+
+    void dfsx(int x) {
+        int i;
+        vis[x] = true;
+        for (i = headx[x]; ~i; i = edgex[i].next) {
+            if (!vis[edgex[i].ed]) dfsx(edgex[i].ed);
+        }
+        vs[--idx] = x;
+    }
+
+    void dfsy(int x, int k) {
+        int i;
+        vis[x] = true; sid[x] = k;
+        for (i = heady[x]; ~i; i = edgey[i].next) {
+            if (!vis[edgey[i].ed]) dfsy(edgey[i].ed, k);
+        }
+    }
+
+    bool solve() {
+        int i;
+        memset(vis, 0, sizeof(vis));
+        for (idx = nv, i = 0; i < nv; ++i) {
+            if (!vis[i]) dfsx(i);
+        }
+        memset(vis, 0, sizeof(vis));
+        for (scnt = i = 0; i < nv; ++i) {
+            if (!vis[vs[i]]) dfsy(vs[i], scnt++);
+        }
+        for (i = 0; i < n; ++i) {
+            if (sid[T(i)] == sid[F(i)]) return false;
+        }
+        return true;
+    }
+
+    bool getAns(int k) {
+        return sid[T(k)] > sid[F(k)];
+    }
+} sat;

@@ -1,0 +1,46 @@
+// 求无向图最小割Stoer-Wagner算法，O(v^3)
+// 此处使用邻接阵实现，不连通处为0，初始化将mat置为0，为防止重边 mat[b][a] = (mat[a][b] += c)
+// 如果是稀疏图，可以将 prim 部分改为使用 heap 实现降低复杂度
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAXV 510
+#define INF 1000000000
+
+using namespace std;
+
+int mat[MAXV][MAXV], v[MAXV], dis[MAXV];
+bool vis[MAXV];
+
+int minCut(int n) {
+    int i, j, mv, s, t, ans = INF;
+
+    for (i = 0; i < n; ++i) v[i] = i;
+    while (n > 1) {
+        memset(dis, 0, sizeof(dis));
+        memset(vis, 0, sizeof(vis));
+        dis[v[0]] = INF;
+        for (i = 0; i < n; ++i) {
+            for (mv = -1, j = 0; j < n; ++j) {
+                if (!vis[v[j]] && mv < dis[v[j]]) mv = dis[v[t = j]];
+            }
+            if (!mv) return 0;
+            vis[v[t]] = true;
+            for (j = 0; j < n; ++j) {
+                if (!vis[v[j]]) dis[v[j]] += mat[v[t]][v[j]];
+            }
+            if (i < n - 1) s = t;
+            else {
+                ans = min(ans, mv);
+                for (j = 0; j < n; ++j) {
+                    mat[v[j]][v[s]] = (mat[v[s]][v[j]] += mat[v[t]][v[j]]);
+                }
+                v[t] = v[--n];
+            }
+        }
+    }
+
+    return ans;
+}

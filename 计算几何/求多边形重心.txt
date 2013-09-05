@@ -1,0 +1,44 @@
+// 求任意多边形重心
+// 多边形按顺时针或者逆时针顺序给出，且保证面积不为0
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <cmath>
+
+#define MAX 1000010
+
+using namespace std;
+
+const double eps = 1e-8;
+
+struct Point {
+    double x, y;
+
+    Point() {}
+    Point(double _x, double _y) : x(_x), y(_y) {}
+
+    Point operator -(const Point &p) const {
+        return Point(x - p.x, y - p.y);
+    }
+
+    double xMul(const Point &p) const {
+        return x * p.y - y * p.x;
+    }
+} p[MAX];
+
+Point barycenter(const Point *p, int n) {
+    Point ret(0, 0);
+    int i;
+    double s = 0, cur;
+
+    for (i = 1; i < n - 1; ++i) {
+        cur = (p[i] - p[0]).xMul(p[i + 1] - p[0]);
+        ret.x += (p[0].x + p[i].x + p[i + 1].x) * cur;
+        ret.y += (p[0].y + p[i].y + p[i + 1].y) * cur;
+        s += cur;
+    }
+    ret.x /= s * 3; ret.y /= s * 3;
+
+    return ret;
+}

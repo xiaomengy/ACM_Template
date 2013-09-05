@@ -1,0 +1,109 @@
+// 空间最近点对_随机增量法
+// 使用前需要先 srand
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
+#include <cmath>
+#include <ctime>
+#include <algorithm>
+
+#define MAX 20100
+#define MP 20011
+#define P 359
+#define Q 93
+#define MASK 0x7FFFFFFF
+#define INF 1e16
+
+using namespace std;
+
+const double eps = 1e-8;
+const int dx[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+const int dy[] = {-1, -1, -1, 0, 0, 0, 1, 1, 1, -1, -1, -1, 0, 0, 0, 1, 1, 1, -1, -1, -1, 0, 0, 0, 1, 1, 1};
+const int dz[] = {-1, 0, 1, -1, 0, 1, -1, 0, 1, -1, 0, 1, -1, 0, 1, -1, 0, 1, -1, 0, 1, -1, 0, 1, -1, 0, 1};
+
+struct Point {
+    double x, y, z;
+} p[MAX];
+
+struct Grid {
+    int x, y, z;
+
+    Grid() {}
+    Grid(int _x, int _y, int _z) : x(_x), y(_y), z(_z) {}
+
+    bool operator ==(const Grid &o) const {
+        return x == o.x && y == o.y && z == o.z;
+    }
+};
+
+inline bool eq(double x, double y) {
+    return fabs(x - y) < eps;
+}
+
+inline Grid getGrid(const Point &p, double r) {
+    return Grid(floor(p.x / r), floor(p.y / r), floor(p.z / r));
+}
+
+inline double dis(const Point &a, const Point &b) {
+    return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y) + (a.z - b.z) * (a.z - b.z));
+}
+
+struct Hash {
+    Grid _key[MAX];
+    Point _val[MAX];
+    int _head[MAX], _next[MAX], _tot;
+
+    void clear() {
+        memset(_head, -1, sizeof(_head));
+        _tot = 0;
+    }
+
+    int hashFunc(const Grid &key) const {
+        return (((key.x * P) ^ (key.y * Q) ^ key.z) & MASK) % MP;
+    }
+
+    void insert(const Grid &key, const Point &val) {
+        int k = hashFunc(key);
+        _key[_tot] = key; _val[_tot] = val;
+        _next[_tot] = _head[k]; _head[k] = _tot++;
+    }
+
+    double query(const Grid &key, const Point &val) const {
+        int i, j, k;
+        Grid cur;
+        double ret = INF;
+
+        for (i = 0; i < 27; ++i) {
+            cur = Grid(key.x + dx[i], key.y + dy[i], key.z + dz[i]);
+            for (j = _head[hashFunc(cur)]; ~j; j = _next[j]) {
+                if (cur == _key[j]) ret = min(ret, dis(val, _val[j]));
+            }
+        }
+
+        return ret;
+    }
+} mp;
+
+void rebuild(const Point *p, int n, double r) {
+    mp.clear();
+    for (int i = 0; i < n; ++i) mp.insert(getGrid(p[i], r), p[i]);
+}
+
+double solve(Point *p, int n) {
+    int i;
+    double ret, cur;
+
+    random_shuffle(p, p + n);
+    if (eq(ret = dis(p[0], p[1]), 0)) return 0;
+    rebuild(p, 2, ret);
+    for (i = 2; i < n; ++i) {
+        if (eq(cur = mp.query(getGrid(p[i], ret), p[i]), 0)) return 0;
+        if (cur < ret) rebuild(p, i + 1, ret = cur);
+        else mp.insert(getGrid(p[i], ret), p[i]);
+    }
+
+    return ret;
+}
+

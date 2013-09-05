@@ -1,0 +1,61 @@
+// 求多边形费马点_模拟退火算法
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <cmath>
+
+#define INF 1e20
+#define MAX 1e6
+#define MAXN 110
+
+using namespace std;
+
+const double eps = 1e-8;
+
+struct Point {
+    double x, y;
+
+    Point() {}
+    Point(double _x, double _y) : x(_x), y(_y) {}
+
+    Point operator +(const Point &p) const {
+        return Point(x + p.x, y + p.y);
+    }
+
+    Point operator -(const Point &p) const {
+        return Point(x - p.x, y - p.y);
+    }
+
+    Point operator *(double k) const {
+        return Point(x * k, y * k);
+    }
+} p[MAXN];
+
+const Point d[4] = {Point(-1, 0), Point(0, -1), Point(1, 0), Point(0, 1)};
+
+double dis(const Point &a, const Point &b) {
+    return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
+}
+
+double solve(const Point *p, int n, Point &ret) {
+    int i, j;
+    double x, cur, ans = INF;
+    bool tag;
+    Point nxt;
+
+    for (ret = Point(0, 0), x = MAX; x > eps; x *= 0.5) {
+        for (tag = true; tag;) {
+            for (tag = i = 0; i < 4; ++i) {
+                nxt = ret + d[i] * x;
+                for (cur = j = 0; j < n; ++j) cur += dis(nxt, p[j]);
+                if (cur < ans) {
+                    ans = cur; ret = nxt; tag = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    return ans;
+}

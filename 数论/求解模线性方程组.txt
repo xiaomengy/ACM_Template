@@ -1,0 +1,48 @@
+//求解模线性方程组
+//x = ri mod pi;
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAX 110
+
+typedef __int64 i64;
+
+using namespace std;
+
+struct Equation {
+    i64 p, r;
+} eq[MAX];
+
+i64 extEuclid(i64 a, i64 b, i64 &x, i64 &y) {
+    i64 r, t;
+
+    if (!b) {
+        x = 1; y = 0;
+        return a;
+    }
+    r = extEuclid(b, a % b, x, y);
+    t = x; x = y; y = t - a / b * y;
+
+    return r;
+}
+
+i64 solve(int k) {
+    int i;
+    i64 x, y, d, a, b, m, n, t, ans;
+
+    ans = a = eq[0].r % eq[0].p; m = eq[0].p;
+    for (i = 1; i < k; ++i) {
+        b = eq[i].r % eq[i].p; n = eq[i].p;
+        d = extEuclid(m, n, x, y);
+        if ((b - a) % d) return -1;
+        t = n / d;
+        x = ((b - a) / d * x % t + t) % t;
+        a = x * m + a; m = m / d * n;
+        ans = a = (a % m + m) % m;
+    }
+
+    return ans;
+}
+

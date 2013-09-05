@@ -1,0 +1,37 @@
+// 求标准正态分布函数
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <cmath>
+
+#define INF 1e20
+#define ZERO(x) (fabs(x) < eps)
+
+using namespace std;
+
+const double Pi = acos(-1.0);
+const double eps = 1e-8;
+const double a[] = {
+    0.070523084, 0.0422820123, 0.0092705272,
+    0.0001520143, 0.0002765672, 0.0000430638
+};
+
+double erf6(double x) {
+    double t = 0;
+    int i;
+
+    for (i = 0; i < 6; i++) {
+        t += a[i] * pow(x, i+1);
+    }
+
+    return 1 - pow(1+t, -16);
+}
+
+double fiErf6(double x) {
+    return 0.5 * (1 + erf6(fabs(x) / sqrt(2)));
+}
+
+double gauss(double x) {
+    return ZERO(x) ? 0.5 : (x > 0 ? fiErf6(x) : 1 - fiErf6(x));
+}

@@ -1,0 +1,110 @@
+//小步大步攻击算法
+//求解 a^x = b mod c, 返回-1代表无解
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <map>
+#include <cmath>
+
+#define MOD 100003
+#define MAX 200010
+
+typedef __int64 i64;
+
+using namespace std;
+
+struct Hash {
+    int a, b, next;
+} hash[MAX];
+
+int head[MOD], tot;
+
+void init() {
+    memset(head, -1, sizeof(head));
+    tot = 0;
+}
+
+void insert(int a, int b) {
+    int k = b % MOD, i;
+
+    for (i = head[k]; ~i; i = hash[i].next) {
+        if (hash[i].b == b) return;
+    }
+    hash[tot].a = a;
+    hash[tot].b = b;
+    hash[tot].next = head[k];
+    head[k] = tot++;
+}
+
+int find(int b) {
+    int k = b % MOD, i;
+
+    for (i = head[k]; ~i; i = hash[i].next) {
+        if (hash[i].b == b) return hash[i].a;
+    }
+
+    return -1;
+}
+
+int gcd(int a, int b) {
+    return b ? gcd(b, a % b) : a;
+}
+
+int extEuclid(int a, int b, int &x, int &y) {
+    int r, t;
+
+    if (!b) {
+        x = 1; y = 0;
+        return a;
+    }
+    r = extEuclid(b, a % b, x, y);
+    t = x; x = y; y = t - a / b * y;
+
+    return r;
+}
+
+int inval(int a, int b, int n) {
+    int x, y, e;
+
+    extEuclid(a, n, x, y);
+    e = (i64)x * b % n;
+
+    return e < 0 ? e + n : e;
+}
+
+int modPow(i64 a, i64 b, int p) {
+    i64 ret = 1;
+
+    for (a %= p; b; b >>= 1) {
+        if (b & 1) ret = ret * a % p;
+        a = a * a % p;
+    }
+
+    return (int)ret;
+}
+
+int babyStep(int a, int b, int c) {
+    i64 buf = 1, d = buf, k;
+    int i, p = 0, tmp, m, w;
+
+    init();
+    for (i = 0; i <= 100; ++i, buf = buf * a % c) {
+        if (buf == b) return i;
+    }
+    while ((tmp = gcd(a, c)) != 1) {
+        if (b % tmp) return -1;
+        ++p;
+        c /= tmp; b /= tmp;
+        d = d * a / tmp % c;
+    }
+    m = (int)ceil(sqrt((double)c));
+    for (buf = 1, i = 0; i <= m; ++i, buf = buf * a % c) insert(i, buf);
+    for (i = 0, k = modPow((i64)a, m, c); i <= m; ++i, d = d * k % c) {
+        tmp = inval((int)d, b, c);
+        if (tmp > 0 && ~(w = find(tmp))) return i * m + w + p;
+    }
+
+    return -1;
+}
+

@@ -1,0 +1,60 @@
+//求无向图割点
+//cnt[i] = k 表示将顶点i去掉可以得到k + 1个连通块，也就是说cnt[i] > 0 表示此点为割点
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAXV 1010
+#define MAXE 100010
+
+using namespace std;
+
+struct Edge {
+    int ed, next;
+} edge[MAXE];
+
+int head[MAXV], nEdge;
+int dfn[MAXV], low[MAXV], cnt[MAXV], idx, root;
+
+void init() {
+    memset(head, -1, sizeof(head));
+    nEdge = 0;
+}
+
+void addEdge(int a, int b) {
+    edge[nEdge].ed = b;
+    edge[nEdge].next = head[a];
+    head[a] = nEdge++;
+    edge[nEdge].ed = a;
+    edge[nEdge].next = head[b];
+    head[b] = nEdge++;
+}
+
+void tarjan(int x, int p) {
+    int i, y, deg = 0;
+
+    dfn[x] = low[x] = idx++;
+    for (i = head[x]; ~i; i = edge[i].next) {
+        if ((y = edge[i].ed) ^ p) {
+            ++deg;
+            if (~dfn[y]) low[x] = min(low[x], dfn[y]);
+            else {
+                tarjan(y, x);
+                low[x] = min(low[x], low[y]);
+                if (x == root && deg > 1) ++cnt[x];
+                else if (x != root && dfn[x] <= low[y]) ++cnt[x];
+            }
+        }
+    }
+}
+
+void bcc(int v) {
+    int i;
+
+    memset(dfn, -1, sizeof(dfn));
+    memset(cnt, 0, sizeof(cnt));
+    for (i = idx = 0; i < v; ++i) {
+        if (dfn[i] < 0) tarjan(root = i, -1);
+    }
+}

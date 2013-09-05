@@ -1,0 +1,33 @@
+// 求最长回文子串, Manacher 算法，O(n)
+// str = "aba", buff = "$#a#b#a#", rad[i] 表示以buff[i]为中心的最长回文半径
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAX 1000010
+
+using namespace std;
+
+char str[MAX], buff[MAX << 1];
+int rad[MAX << 1];
+
+int manacher(const char *str) {
+    int w = 2, l = 0, r = 0, i, ret = -1;
+
+    buff[0] = '$'; buff[1] = '#';
+    for (i = 0; str[i]; ++i) {
+        buff[w++] = str[i]; buff[w++] = '#';
+    }
+    buff[w] = 0;
+    for (i = 1; i < w; ++i) {
+        rad[i] = r > i ? min(rad[2 * l - i], r - i) : 1;
+        for (; buff[i + rad[i]] == buff[i - rad[i]]; ++rad[i]);
+        if (i + rad[i] > r) {
+            l = i; r = i + rad[i];
+        }
+        ret = max(ret, rad[i]);
+    }
+
+    return ret - 1;
+}

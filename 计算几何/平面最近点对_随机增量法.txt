@@ -1,0 +1,98 @@
+// 随机增量法求平面最近点对
+// 使用前需要先 srand
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
+#include <cmath>
+#include <ctime>
+#include <utility>
+#include <algorithm>
+
+#define MAX 100010
+#define MP 100003
+#define P 359
+#define MASK 0x7FFFFFFF
+#define INF 1e16
+
+using namespace std;
+
+typedef pair<int, int> Pii;
+
+const double eps = 1e-8;
+const int dx[] = {-1, -1, -1, 0, 0, 0, 1, 1, 1};
+const int dy[] = {-1, 0, 1, -1, 0, 1, -1, 0, 1};
+
+struct Point {
+    double x, y;
+} p[MAX];
+
+inline bool eq(double x, double y) {
+    return fabs(x - y) < eps;
+}
+
+inline Pii getGrid(const Point &p, double r) {
+    return make_pair(floor(p.x / r), floor(p.y / r));
+}
+
+inline double dis(const Point &a, const Point &b) {
+    return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
+}
+
+struct Hash {
+    Pii _key[MAX];
+    Point _val[MAX];
+    int _head[MAX], _next[MAX], _tot;
+
+    void clear() {
+        memset(_head, -1, sizeof(_head));
+        _tot = 0;
+    }
+
+    int hashFunc(const Pii &key) const {
+        return ((key.first * P ^ key.second) & MASK) % MP;
+    }
+
+    void insert(const Pii &key, const Point &val) {
+        int k = hashFunc(key);
+        _key[_tot] = key; _val[_tot] = val;
+        _next[_tot] = _head[k]; _head[k] = _tot++;
+    }
+
+    double query(const Pii &key, const Point &val) const {
+        int i, j, k;
+        Pii cur;
+        double ret = INF;
+
+        for (i = 0; i < 9; ++i) {
+            cur = make_pair(key.first + dx[i], key.second + dy[i]);
+            for (j = _head[hashFunc(cur)]; ~j; j = _next[j]) {
+                if (cur == _key[j]) ret = min(ret, dis(val, _val[j]));
+            }
+        }
+
+        return ret;
+    }
+} mp;
+
+void rebuild(const Point *p, int n, double r) {
+    mp.clear();
+    for (int i = 0; i < n; ++i) mp.insert(getGrid(p[i], r), p[i]);
+}
+
+double solve(Point *p, int n) {
+    int i;
+    double ret, cur;
+
+    random_shuffle(p, p + n);
+    if (eq(ret = dis(p[0], p[1]), 0)) return 0;
+    rebuild(p, 2, ret);
+    for (i = 2; i < n; ++i) {
+        if (eq(cur = mp.query(getGrid(p[i], ret), p[i]), 0)) return 0;
+        if (cur < ret) rebuild(p, i + 1, ret = cur);
+        else mp.insert(getGrid(p[i], ret), p[i]);
+    }
+
+    return ret;
+}

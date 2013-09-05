@@ -1,0 +1,174 @@
+// 求3维凸包，随机增量算法
+// 注意三角面数组需要够大，使用前需要 srand()
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
+#include <ctime>
+#include <cmath>
+#include <algorithm>
+
+#define MAX 510
+#define EQ(x, y) (fabs((x) - (y)) < eps)
+#define ZERO(x) (fabs(x) < eps)
+
+using namespace std;
+
+const double eps = 1e-8;
+
+struct Point {
+    double x, y, z;
+
+    Point() {}
+    Point(double _x, double _y, double _z) : x(_x), y(_y), z(_z) {}
+
+    double modulus() {
+        return sqrt(x * x + y * y + z * z);
+    }
+
+    bool operator !=(const Point &p) const {
+        return !EQ(x, p.x) || !EQ(y, p.y);
+    }
+
+    Point operator -(const Point &p) const {
+        return Point(x - p.x, y - p.y, z - p.z);
+    }
+
+    double dotMul(const Point &p) const {
+        return x * p.x + y * p.y + z * p.z;
+    }
+
+    Point xMul(const Point &p) const {
+         return Point(y * p.z - z * p.y, z * p.x - x * p.z, x * p.y - y * p.x);
+    }
+};
+
+class CH3D {
+public:
+    void init() { n = cnt = 0; }
+
+    void addPoint(const Point &_p) { p[n++] = _p; }
+
+    void constuct() {
+        int i, j, cur;
+        bool tag;
+        Plane add;
+
+        if (n < 4) return;
+        random_shuffle(p, p + n);
+        for (tag = false, i = 1; i < n; ++i) {
+            if (p[0] != p[i]) {
+                swap(p[1], p[i]); tag = true;
+                break;
+            }
+        }
+        if (!tag) return;
+        for (tag = false, i = 2; i < n; ++i) {
+            if ((p[1] - p[0]).xMul(p[i] - p[0]).modulus() > 0) {
+                swap(p[2], p[i]); tag = true;
+                break;
+            }
+        }
+        if (!tag) return;
+        for (tag = false, i = 3; i < n; ++i) {
+            if (!ZERO((p[1] - p[0]).xMul(p[2] - p[0]).dotMul(p[i] - p[0]))) {
+                swap(p[3], p[i]); tag = true;
+                break;
+            }
+        }
+        if (!tag) return;
+
+        for (i = 0; i < 4; ++i) {
+            add.a = (i + 1) & 3; add.b = (i + 2) & 3; add.c = (i + 3) & 3;
+            if (pointToPlane(p[i], add)) swap(add.b, add.c);
+            pt[add.a][add.b] =  pt[add.b][add.c] =  pt[add.c][add.a] = cnt;
+            tri[cnt] = add; vis[cnt++] = true;
+        }
+        for (i = 4; i < n; ++i) {
+            for (j = 0; j < cnt; ++j) {
+                if (vis[j] && pointToPlane(p[i], tri[j])) {
+                    dfs(i, j);
+                    break;
+                }
+            }
+        }
+        for (cur = cnt, i = cnt = 0; i < cur; ++i) {
+            if (vis[i]) {
+                tri[cnt] = tri[i]; vis[cnt++] = true;
+            }
+        }
+    }
+
+    double area() {
+        int i;
+        double ret = 0;
+        for (i = 0; i < cnt; ++i) {
+            ret += (p[tri[i].b] - p[tri[i].a]).xMul(p[tri[i].c] - p[tri[i].a]).modulus();
+        }
+        return ret / 2;
+    }
+
+    double volume() {
+        int i;
+        double ret = 0;
+        for (i = 0; i < cnt; ++i) {
+            ret += (p[tri[i].b] - p[tri[i].a]).xMul(p[tri[i].b] - p[tri[i].a]).dotMul(p[tri[i].c] - p[tri[i].a]);
+        }
+        return ret / 6;
+    }
+
+    int triangleNum() { return cnt; }
+
+    int polygonNum() {
+        int ret = 0, i, j, cur;
+        for (i = 0; i < cnt; ++i) {
+            for (cur = 1, j = 0; j < i; ++j) {
+                if (same(tri[i], tri[j])) {
+                    cur = 0;
+                    break;
+                }
+            }
+            ret += cur;
+        }
+        return ret;
+    }
+
+private:
+    struct Plane {
+        int a, b, c;
+    } tri[MAX << 3];
+
+    Point p[MAX];
+    int pt[MAX][MAX], n, cnt;
+    bool vis[MAX << 3];
+
+    bool pointToPlane(const Point &o, const Plane &f) {
+        return (p[f.b] - p[f.a]).xMul(p[f.c] - p[f.a]).dotMul(o - p[f.a]) > 0;
+    }
+
+    void deal(int x, int a, int b) {
+        int y = pt[a][b];
+        if (vis[y]) {
+            if (pointToPlane(p[x], tri[y])) dfs(x, y);
+            else {
+                tri[cnt].a = b; tri[cnt].b = a; tri[cnt].c = x; vis[cnt] = true;
+                pt[x][b] = pt[a][x] = pt[b][a] = cnt++;
+            }
+        }
+    }
+
+    void dfs(int x, int k) {
+        vis[k] = false;
+        deal(x, tri[k].b, tri[k].a);
+        deal(x, tri[k].c, tri[k].b);
+        deal(x, tri[k].a, tri[k].c);
+    }
+
+    bool same(const Plane &x, const Plane &y) {
+        Point &a = p[x.a], &b = p[x.b], &c = p[x.c];
+        return ZERO((b - a).xMul(c - a).dotMul(p[y.a] - a))
+            && ZERO((b - a).xMul(c - a).dotMul(p[y.b] - a))
+            && ZERO((b - a).xMul(c - a).dotMul(p[y.c] - a));
+    }
+} hull;

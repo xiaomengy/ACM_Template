@@ -1,0 +1,55 @@
+// 线段树_单点替换区间最值
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAX 200010
+#define INF 1000000000
+#define LC(x) ((x) << 1)
+#define RC(x) (((x) << 1) | 1)
+#define AVG(x, y) (((x) & (y)) + (((x) ^ (y)) >> 1))
+#define PAR int x, int l, int r
+#define LL LC(x), l, mid
+#define RR RC(x), mid + 1, r
+
+using namespace std;
+
+int maxn[MAX << 2], a[MAX];
+
+void pushUp(int x) {
+    maxn[x] = max(maxn[LC(x)], maxn[RC(x)]);
+}
+
+void build(PAR) {
+    int mid = AVG(l, r);
+
+    if (l == r) {
+        maxn[x] = a[l];
+        return;
+    }
+    build(LL); build(RR);
+    pushUp(x);
+}
+
+void update(PAR, int p, int val) {
+    int mid = AVG(l, r);
+
+    if (l == r) {
+        maxn[x] = val;
+        return;
+    }
+    if (p <= mid) update(LL, p, val);
+    else update(RR, p, val);
+    pushUp(x);
+}
+
+int query(PAR, int low, int high) {
+    int mid = AVG(l, r), ret = -INF;
+
+    if (low <= l && r <= high) return maxn[x];
+    if (low <= mid) ret = max(ret, query(LL, low, high));
+    if (high > mid) ret = max(ret, query(RR, low, high));
+
+    return ret;
+}

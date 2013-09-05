@@ -1,0 +1,26 @@
+// 旋转卡壳求面积最大三角形
+// 需预先求出凸包，hull 记录凸包点, cnt 记录凸包中点个数且 hull[cnt] = hull[0]
+// 时间复杂度 O(n)
+
+double area(const Point &a, const Point &b, const Point &c) {
+    return fabs((c - a).xMul(b - a)) * 0.5;
+}
+
+double rotatingCalipers() {
+    int i = 0, j = 1, k = 2, a, b, c;
+    double ret;
+
+    if (cnt < 3) return 0;
+    ret = area(hull[i], hull[j], hull[k]);
+    while (k < cnt) {
+        a = i; b = j; c = k;
+        while (area(hull[i], hull[j], hull[k]) < area(hull[i], hull[j], hull[k + 1])) ++k;
+        while (area(hull[i], hull[j], hull[k]) < area(hull[i], hull[j + 1], hull[k])) ++j;
+        while (area(hull[i], hull[j], hull[k]) < area(hull[i + 1], hull[j], hull[k])) ++i;
+        ret = max(ret, area(hull[i], hull[j], hull[k]));
+        if (i == a && j == b && k == c) ++k;
+    }
+
+    return ret;
+}
+

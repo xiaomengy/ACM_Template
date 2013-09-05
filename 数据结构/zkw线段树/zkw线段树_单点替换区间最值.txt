@@ -1,0 +1,40 @@
+// zkw线段树，单点替换区间最值
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAX 0x80000
+
+using namespace std;
+
+int maxv[MAX], M;
+int a[MAX];
+
+inline void pushUp(int x) {
+    maxv[x] = max(maxv[x << 1], maxv[(x << 1) | 1]);
+}
+
+void build(const int *a, int n) {
+    int i;
+	
+    for (M = 1; M < n + 2; M <<= 1);
+    memset(maxv, -1, sizeof(maxv));
+    for (i = 1; i <= n; ++i) maxv[i | M] = a[i];
+    for (i = M - 1; i; --i) pushUp(i);
+}
+
+void update(int x, int val) {
+    for (maxv[x |= M] = val, x >>= 1; x; x >>= 1) pushUp(x);
+}
+
+int query(int l, int r) {
+    int ret = -1;
+	
+    for (l = (l | M) - 1, r = (r | M) + 1; l ^ r ^ 1; l >>= 1, r >>= 1) {
+        if (~l & 1) ret = max(ret, maxv[l ^ 1]);
+        if ( r & 1) ret = max(ret, maxv[r ^ 1]);
+    }
+	
+    return ret;
+}

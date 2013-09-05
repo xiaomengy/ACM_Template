@@ -1,0 +1,52 @@
+// 线段树_求解约瑟夫问题
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAX 100010
+#define LC(x) ((x) << 1)
+#define RC(x) (((x) << 1) | 1)
+#define AVG(x, y) (((x) & (y)) + (((x) ^ (y)) >>1))
+#define PAR int x, int l, int r
+#define LL LC(x), l, mid
+#define RR RC(x), mid + 1, r
+
+using namespace std;
+
+int sum[MAX << 2];
+
+void build(PAR) {
+    int mid = AVG(l, r);
+
+    sum[x] = r - l + 1;
+    if (l < r) {
+        build(LL); build(RR);
+    }
+}
+
+int update(PAR, int p) {
+    int mid = AVG(l, r);
+
+    --sum[x];
+    if (l == r) return l;
+    return p < sum[LC(x)] ? update(LL, p) : update(RR, p - sum[LC(x)]);
+}
+
+
+int main() {
+    int n, k, i, p;
+
+    while (~scanf("%d %d", &n, &k)) {
+        build(1, 0, n - 1);
+        p = 0;
+        for (i = 0; i < n; i++) {
+            p = (p + k - 1) % (n - i);
+            printf("%d", update(1, 0, n - 1, p) + 1);
+            if (i < n - 1) printf(" ");
+        }
+        printf("\n");
+    }
+
+    return 0;
+}
