@@ -79,7 +79,7 @@ struct _2SAT {
         return true;
     }
 
-    bool getAns(int k) {
+    bool getAns(int k) const {
         return sid[T(k)] > sid[F(k)];
     }
 } sat;
