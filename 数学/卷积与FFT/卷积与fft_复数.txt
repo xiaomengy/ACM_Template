@@ -1,5 +1,5 @@
 // 通过fft求卷积，复杂度 O(nlogn)
-// conv与fft函数参数地址均可相同做原地变换, fft中 inv = true 表示 ifft
+// conv与fft函数参数地址均可相同做原地变换, fft中 inv = true 表示 ifft, fft 参数 n 必须为 2^k
 
 #include <iostream>
 #include <cstdio>
