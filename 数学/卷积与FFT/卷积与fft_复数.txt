@@ -1,0 +1,58 @@
+// 通过fft求卷积，复杂度 O(nlogn)
+// conv与fft函数参数地址均可相同做原地变换, fft中 inv = true 表示 ifft
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <cmath>
+#include <algorithm>
+#include <complex>
+
+#define MAX 0x40000
+
+using namespace std;
+
+typedef complex<double> Complex;
+
+const double pi = acos(-1.0);
+
+int rev(int n, int x) {
+    int ret = 0;
+    for (n >>= 1; n; n >>= 1, x >>= 1) ret = (ret << 1) | (x & 1);
+    return ret;
+}
+
+void fft(const Complex *x, Complex *y, int n, bool inv = false) {
+    int i, j, m;
+    Complex w, wm, u, v;
+
+    if (x != y) memcpy(y, x, n * sizeof(x[0]));
+    for (i = 1; i < n - 1; ++i) {
+        if (i < (j = rev(n, i))) swap(y[i], y[j]);
+    }
+    for (m = 2; m <= n; m <<= 1) {
+        wm = Complex(cos(2 * pi / m), sin(2 * pi / m) * (inv ? -1 : 1));
+        for (i = 0; i < n; i += m) {
+            w = Complex(1, 0);
+            for (j = i; j < i + (m >> 1); ++j, w *= wm) {
+                u = y[j]; v = w * y[j + (m >> 1)];
+                y[j] = u + v; y[j + (m >> 1)] = u - v;
+            }
+        }
+    }
+    if (inv) {
+        for (i = 0; i < n; ++i) y[i] /= (double)n;
+    }
+}
+
+void conv(Complex *a, int n, Complex *b, int m, Complex *c) {
+    int l, i;
+
+    for (l = 1; l < n + m - 1; l <<= 1);
+    fill(a + n, a + l, Complex(0, 0));
+    if (a != b) fill(b + m, b + l, Complex(0, 0));
+    fft(a, a, l);
+    if (a != b) fft(b, b, l);
+    for (i = 0; i < l; ++i) c[i] = a[i] * b[i];
+    fft(c, c, l, true);
+}
