@@ -48,8 +48,8 @@ void conv(Complex *a, int n, Complex *b, int m, Complex *c) {
     int l, i;
 
     for (l = 1; l < n + m - 1; l <<= 1);
-    fill(a + n, a + l, Complex(0, 0));
-    if (a != b) fill(b + m, b + l, Complex(0, 0));
+    fill(a + n, a + l, 0.0);
+    if (a != b) fill(b + m, b + l, 0.0);
     fft(a, a, l);
     if (a != b) fft(b, b, l);
     for (i = 0; i < l; ++i) c[i] = a[i] * b[i];
