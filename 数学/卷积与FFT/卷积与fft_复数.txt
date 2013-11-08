@@ -33,8 +33,7 @@ void fft(const Complex *x, Complex *y, int n, bool inv = false) {
     for (m = 2; m <= n; m <<= 1) {
         wm = Complex(cos(2 * pi / m), sin(2 * pi / m) * (inv ? -1 : 1));
         for (i = 0; i < n; i += m) {
-            w = Complex(1, 0);
-            for (j = i; j < i + (m >> 1); ++j, w *= wm) {
+            for (w = 1.0, j = i; j < i + (m >> 1); ++j, w *= wm) {
                 u = y[j]; v = w * y[j + (m >> 1)];
                 y[j] = u + v; y[j + (m >> 1)] = u - v;
             }
