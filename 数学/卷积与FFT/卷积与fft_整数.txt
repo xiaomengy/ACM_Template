@@ -1,6 +1,7 @@
 // 通过fft求卷积，复杂度 O(nlogn)
 // conv与fft函数参数地址均可相同做原地变换, fft中 inv = true 表示 ifft, fft 参数 n 必须为 2^k
-// 类型 T 可以取 int 与 i64, i64 类型为防止溢出使用加法模拟乘法，效率较低, 此法常数较大，一般建议使用复数fft
+// 类型 T 可以取 int 与 i64, i64 类型为防止溢出使用加法模拟乘法，效率较低
+// 使用时需注意结果数据规模，如果超过 int 需要使用 i64, 此法常数较大，一般建议使用复数fft
 
 #include <iostream>
 #include <cstdio>
