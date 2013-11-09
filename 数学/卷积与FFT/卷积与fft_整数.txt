@@ -1,0 +1,86 @@
+// 通过fft求卷积，复杂度 O(nlogn)
+// conv与fft函数参数地址均可相同做原地变换, fft中 inv = true 表示 ifft, fft 参数 n 必须为 2^k
+// 类型 T 可以取 int 与 i64, i64 类型为防止溢出使用加法模拟乘法，效率较低, 此法常数较大，一般建议使用复数fft
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <typeinfo>
+#include <algorithm>
+
+#define MAX 0x40000
+#define P ((15 << 27) | 1)
+#define Q ((5LL << 55) | 1)
+#define GP 31
+#define GQ 6
+#define IS_INT(x) (typeid(x).name() == typeid(1).name())
+
+using namespace std;
+
+typedef __int64 i64;
+
+template<typename T>
+T modMul(T a, T b, T p) {
+    T ret = 0;
+    if (IS_INT(p)) return ((i64)a * (i64)b % p);
+    for (a %= p; b; b >>= 1) {
+        if ((b & 1) && (ret += a) >= p) ret -= p;
+        if ((a <<= 1) >= p) a -= p;
+    }
+    return ret;
+}
+
+template<typename T>
+T modPow(T a, T b, T p) {
+    T ret = 1;
+    for (a %= p; b; b >>= 1) {
+        if (b & 1) ret = modMul(ret, a, p);
+        a = modMul(a, a, p);
+    }
+    return ret;
+}
+
+int rev(int n, int x) {
+    int ret = 0;
+    for (n >>= 1; n; n >>= 1, x >>= 1) ret = (ret << 1) | (x & 1);
+    return ret;
+}
+
+template<typename T>
+void fft(const T *x, T *y, int n, bool inv = false) {
+    T p = IS_INT(*y) ? P : Q, w, wm, u, v, g = IS_INT(*y) ? GP : GQ, nv;
+    int i, j, m;
+
+    if (x != y) memcpy(y, x, n * sizeof(x[0]));
+    for (i = 1; i < n - 1; ++i) {
+        if (i < (j = rev(n, i))) swap(y[i], y[j]);
+    }
+    for (m = 2; m <= n; m <<= 1) {
+        wm = modPow(g, inv ? (p - 1 - (p - 1) / m) : (p - 1) / m, p);
+        for (i = 0; i < n; i += m) {
+            for (w = 1, j = i; j < i + (m >> 1); ++j, w = modMul(w, wm, p)) {
+                u = y[j]; v = modMul(w, y[j + (m >> 1)], p);
+                y[j] = (i64)u + (i64)v >= p ? (T)((i64)u + (i64)v - p) : u + v;
+                y[j + (m >> 1)] = (u - v < 0) ? u - v + p : u - v;
+            }
+        }
+    }
+    if (inv) {
+        nv = modPow((T)n, p - 2, p);
+        for (i = 0; i < n; ++i) y[i] = modMul(y[i], nv, p);
+    }
+}
+
+template<typename T>
+void conv(T *a, int n, T *b, int m, T *c) {
+    T p = IS_INT(*c) ? P : Q;
+    int l, i;
+
+    for (l = 1; l < n + m - 1; l <<= 1);
+    fill(a + n, a + l, 0);
+    if (a != b) fill(b + m, b + l, 0);
+    fft(a, a, l);
+    if (a != b) fft(b, b, l);
+    for (i = 0; i < l; ++i) c[i] = modMul(a[i], b[i], p);
+    fft(c, c, l, true);
+}
