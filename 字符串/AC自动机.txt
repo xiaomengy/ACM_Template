@@ -1,52 +1,60 @@
-//AC自动机建立
+// AC自动机建立
+// MAXC 为字符集大小，使用时根据字符集改写 chidx 函数，p - ac[0] 为 p 对应下标
 
 #include <iostream>
 #include <cstdio>
 #include <cstring>
 
-#define MAX 50
-#define MAXN 26
-#define MAXL 100010
-#define IDX(x) ((x) - 'a')
+#define MAXC 26
+#define MAXN 1024
+#define MAXL 1024
 
 using namespace std;
 
-struct Trie {
-    int next[MAXN];
-    int suffix, tag;
-} trie[MAX];
+struct ACAutomation {
+    struct ACNode {
+        ACNode *nxt[MAXC], *fail;
+        int acc;
+    } v[MAXN], *que[MAXN];
 
-int tot, que[MAX], front, tail;
+    int tot, front, rear;
 
-void init() {
-    memset(trie, 0, sizeof(trie));
-    tot = 1;
-}
-
-void insert(const char *s) {
-    int r;
-    for (r = 0; *s; ++s) {
-        if (!trie[r].next[IDX(*s)]) trie[r].next[IDX(*s)] = tot++;
-        r = trie[r].next[IDX(*s)];
+    ACNode *operator [](int k) {
+        return v + k;
     }
-    trie[r].tag = 1;
-}
 
-void buildAC() {
-    int i, x, y;
+    int chidx(char ch) {
+        return ch - 'A';
+    }
 
-    front = tail = 0;
-    for (que[tail++] = 0; front < tail;) {
-        x = que[front++];
-        for (i = 0; i < MAXN; ++i) {
-            if (y = trie[x].next[i]) {
-                trie[y].suffix = x ? trie[trie[x].suffix].next[i] : 0;
-                trie[y].tag |= trie[trie[y].suffix].tag;
-                que[tail++] = y;
-            } else {
-                trie[x].next[i] = x ? trie[trie[x].suffix].next[i] : 0;
+    void clear() {
+        memset(v, 0, sizeof(v));
+        tot = 1;
+    }
+
+    void insert(const char *str) {
+        ACNode *p;
+        for (p = v; *str; ++str) {
+            if (!p->nxt[chidx(*str)]) p->nxt[chidx(*str)] = v + tot++;
+            p = p->nxt[chidx(*str)];
+        }
+        p->acc = 1;
+    }
+
+    void build() {
+        int i;
+        ACNode *p;
+        front = rear = 0; v->fail = v;
+        for (que[rear++] = v; front < rear; ) {
+            for (p = que[front++], i = 0; i < MAXC; ++i) {
+                if (!p->nxt[i]) p->nxt[i] = (p == v) ? v : p->fail->nxt[i];
+                else {
+                    p->nxt[i]->fail = (p == v) ? v : p->fail->nxt[i];
+                    p->nxt[i]->acc |= p->nxt[i]->fail->acc;
+                    que[rear++] = p->nxt[i];
+                }
             }
         }
     }
-}
+} ac;
 
