@@ -19,7 +19,7 @@ struct ACAutomation {
 
     int tot, front, rear;
 
-    int chidx(char ch) {
+    int chidx(char ch) const {
         return ch - 'A';
     }
 
