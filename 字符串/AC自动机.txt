@@ -19,12 +19,12 @@ struct ACAutomation {
 
     int tot, front, rear;
 
-    ACNode *operator [](int k) {
-        return v + k;
-    }
-
     int chidx(char ch) {
         return ch - 'A';
+    }
+
+    const ACNode *operator [](int k) const {
+        return v + k;
     }
 
     void clear() {
