@@ -1,5 +1,5 @@
 // AC自动机建立
-// MAXC 为字符集大小，使用时根据字符集改写 chidx 函数，p - ac[0] 为 p 对应下标
+// MAXC 为字符集大小，使用时根据字符集改写 chidx 函数
 
 #include <iostream>
 #include <cstdio>
@@ -13,18 +13,17 @@ using namespace std;
 
 struct ACAutomation {
     struct ACNode {
-        ACNode *nxt[MAXC], *fail;
-        int acc;
-    } v[MAXN], *que[MAXN];
+        int nxt[MAXC], fail, acc;
+    } v[MAXN];
 
-    int tot, front, rear;
+    int que[MAXN], front, rear, tot;
 
-    int chidx(char ch) const {
+    static int chidx(char ch) {
         return ch - 'A';
     }
 
-    const ACNode *operator [](int k) const {
-        return v + k;
+    const ACNode &operator [](int k) const {
+        return v[k];
     }
 
     void clear() {
@@ -33,25 +32,24 @@ struct ACAutomation {
     }
 
     void insert(const char *str) {
-        ACNode *p;
-        for (p = v; *str; ++str) {
-            if (!p->nxt[chidx(*str)]) p->nxt[chidx(*str)] = v + tot++;
-            p = p->nxt[chidx(*str)];
+        int i;
+        for (i = 0; *str; ++str) {
+            if (!v[i].nxt[chidx(*str)]) v[i].nxt[chidx(*str)] = tot++;
+            i = v[i].nxt[chidx(*str)];
         }
-        p->acc = 1;
+        v[i].acc = 1;
     }
 
     void build() {
-        int i;
-        ACNode *p;
-        front = rear = 0; v->fail = v;
-        for (que[rear++] = v; front < rear; ) {
-            for (p = que[front++], i = 0; i < MAXC; ++i) {
-                if (!p->nxt[i]) p->nxt[i] = (p == v) ? v : p->fail->nxt[i];
+        int x, y, i;
+        front = rear = 0;
+        for (que[rear++] = 0; front < rear; ) {
+            for (x = que[front++], i = 0; i < MAXC; ++i) {
+                if (!(y = v[x].nxt[i])) v[x].nxt[i] = x ? v[v[x].fail].nxt[i] : 0;
                 else {
-                    p->nxt[i]->fail = (p == v) ? v : p->fail->nxt[i];
-                    p->nxt[i]->acc |= p->nxt[i]->fail->acc;
-                    que[rear++] = p->nxt[i];
+                    v[y].fail = x ? v[v[x].fail].nxt[i] : 0;
+                    v[y].acc |= v[v[y].fail].acc;
+                    que[rear++] = y;
                 }
             }
         }
