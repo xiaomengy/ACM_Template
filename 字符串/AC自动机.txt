@@ -1,5 +1,5 @@
 // AC自动机建立
-// MAXC 为字符集大小，使用时根据字符集改写 chidx 函数
+// MAXC 为字符集大小，使用时根据字符集改写 chidx 函数，并修改 acc 标记
 
 #include <iostream>
 #include <cstdio>
@@ -14,30 +14,30 @@ using namespace std;
 struct ACAutomation {
     struct ACNode {
         int nxt[MAXC], fail, acc;
-    } v[MAXN];
+    } q[MAXN];
 
     int que[MAXN], front, rear, tot;
 
     static int chidx(char ch) {
-        return ch - 'A';
+        return ch - 'A'
     }
 
     const ACNode &operator [](int k) const {
-        return v[k];
+        return q[k];
     }
 
     void clear() {
-        memset(v, 0, sizeof(v));
+        memset(q, 0, sizeof(q));
         tot = 1;
     }
 
     void insert(const char *str) {
         int i;
         for (i = 0; *str; ++str) {
-            if (!v[i].nxt[chidx(*str)]) v[i].nxt[chidx(*str)] = tot++;
-            i = v[i].nxt[chidx(*str)];
+            if (!q[i].nxt[chidx(*str)]) q[i].nxt[chidx(*str)] = tot++;
+            i = q[i].nxt[chidx(*str)];
         }
-        v[i].acc = 1;
+        q[i].acc = 1;
     }
 
     void build() {
@@ -45,10 +45,10 @@ struct ACAutomation {
         front = rear = 0;
         for (que[rear++] = 0; front < rear; ) {
             for (x = que[front++], i = 0; i < MAXC; ++i) {
-                if (!(y = v[x].nxt[i])) v[x].nxt[i] = x ? v[v[x].fail].nxt[i] : 0;
+                if (!(y = q[x].nxt[i])) q[x].nxt[i] = x ? q[q[x].fail].nxt[i] : 0;
                 else {
-                    v[y].fail = x ? v[v[x].fail].nxt[i] : 0;
-                    v[y].acc |= v[v[y].fail].acc;
+                    q[y].fail = x ? q[q[x].fail].nxt[i] : 0;
+                    q[y].acc |= q[q[y].fail].acc;
                     que[rear++] = y;
                 }
             }
