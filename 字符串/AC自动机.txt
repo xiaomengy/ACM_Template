@@ -19,7 +19,7 @@ struct ACAutomation {
     int que[MAXN], front, rear, tot;
 
     static int chidx(char ch) {
-        return ch - 'A'
+        return ch - 'A';
     }
 
     const ACNode &operator [](int k) const {
