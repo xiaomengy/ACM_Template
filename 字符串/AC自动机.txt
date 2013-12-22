@@ -22,7 +22,7 @@ struct ACAutomation {
         return ch - 'A';
     }
 
-    const ACNode &operator [](int k) const {
+    ACNode &operator [](int k) {
         return q[k];
     }
 
