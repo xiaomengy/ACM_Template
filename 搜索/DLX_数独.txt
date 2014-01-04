@@ -1,138 +1,123 @@
-// DLX解数独， POJ3074
+// DLX解数独
+// 结果原地存储，使用时需要根据问题修改求解添加规则和结果输出
 
 #include <iostream>
 #include <cstdio>
 #include <cstring>
 #include <algorithm>
 
+#define MAX 100010
+#define MAXR 1024
+#define MAXC 512
 #define N 9
-#define SN 3
-#define MAXC 324
-#define MAXR 729
-#define MAX 300100
+#define M 3
+#define COL 324
 
 using namespace std;
 
-int L[MAX], R[MAX], U[MAX], D[MAX], S[MAXC + 1], O[MAXR + 1], X[MAX], Y[MAX];
-int head, tot, cnt, rhead[MAXR + 1];
+struct DLX {
+    int l[MAX], r[MAX], u[MAX], d[MAX], x[MAX], y[MAX];
+    int sum[MAXC], ans[MAXR], tot, cnt;
 
-bool bitMap[MAXR + 1][MAXC + 1];
-char buff[100];
+    void init(int c) {
+        int i;
 
-void init(int c) {
-    int i;
-
-    head = 0;
-    L[head] = R[head] = head;
-    for (i = 1; i <= c; i++) {
-        L[i] = i - 1;
-        R[i] = R[L[i]];
-        L[R[i]] = R[L[i]] = i;
-        U[i] = D[i] = i;
-        X[i] = 0;
-        Y[i] = i;
-        S[i] = 0;
-    }
-    memset(rhead, -1, sizeof(rhead));
-    tot = c;
-}
-
-void insert(int x, int y) {
-    tot++;
-    if (rhead[x] < 0) {
-        rhead[x] = tot;
-        L[tot] = R[tot] = tot;
-    } else {
-        L[tot] = L[rhead[x]];
-        R[tot] = rhead[x];
-        L[R[tot]] = R[L[tot]] = tot;
-    }
-    U[tot] = U[y];
-    D[tot] = y;
-    U[D[tot]] = D[U[tot]] = tot;
-    X[tot] = x;
-    Y[tot] = y;
-    S[y]++;
-}
-
-void cover(int c) {
-    int i, j;
-
-    L[R[c]] = L[c];
-    R[L[c]] = R[c];
-    for (i = D[c]; i != c; i = D[i]) {
-        for (j = R[i]; j != i; j = R[j]) {
-            U[D[j]] = U[j];
-            D[U[j]] = D[j];
-            S[Y[j]]--;
+        for (i = 0; i <= c; ++i) {
+            l[i] = i - 1; r[i] = i + 1; u[i] = i; d[i] = i;
         }
+        l[0] = c; r[c] = 0; tot = c;
+        memset(sum, 0, sizeof(sum));
     }
-}
 
-void recover(int c) {
-    int i, j;
+    void addRow(int row, int *cols, int n) {
+        int cur = tot + 1, col, i;
 
-    for (i = U[c]; i != c; i = U[i]) {
-        for (j = L[i]; j != i; j = L[j]) {
-            U[D[j]] = D[U[j]] = j;
-            S[Y[j]]++;
+        sort(cols, cols + n);
+        for (i = 0; i < n; ++i) {
+            col = cols[i]; ++sum[col]; ++tot;
+            l[tot] = tot - 1; r[tot] = tot + 1; d[tot] = col; u[tot] = u[col];
+            d[u[col]] = tot; u[col] = tot; x[tot] = row; y[tot] = col;
         }
-    }
-    L[R[c]] = R[L[c]] = c;
-}
-
-bool dlx(int dep) {
-    int i, j, c, m = MAXR + 1;
-
-    if (R[head] == head) {
-        cnt = dep;
-        return true;
-    }
-    for (i = R[head]; i != head; i = R[i]) {
-        if (m > S[i]) {
-            m = S[i];
-            c = i;
-        }
+        l[cur] = tot; r[tot] = cur;
     }
 
-    cover(c);
-    for (i = D[c]; i != c; i = D[i]) {
-        for (j = R[i]; j != i; j = R[j]) cover(Y[j]);
-        O[dep] = X[i];
-        if (dlx(dep + 1)) return true;
-        for (j = L[i]; j != i; j = L[j]) recover(Y[j]);
-    }
-    recover(c);
+    void cover(int c) {
+        int i, j;
 
-    return false;
-}
-
-int main() {
-    int i, r, c, tr, tc, val;
-
-    while (scanf("%s", buff) && strcmp(buff, "end")) {
-        init(MAXC);
-        for (i = 0; i < N * N * N; i++) {
-            r = i / N / N % N;
-            c = i / N % N;
-            val = i % N + 1;
-            if (buff[r * N + c] == '.' || buff[r * N + c] - '0' == val) {
-                insert(i + 1, r * N + val);
-                insert(i + 1, c * N + val + N * N);
-                tr = r / SN;
-                tc = c / SN;
-                insert(i + 1, (tr * SN + tc) * N + val + N * N * 2);
-                insert(i + 1, r * N + c + 1 + N * N * 3);
+        l[r[c]] = l[c]; r[l[c]] = r[c];
+        for (i = d[c]; i != c; i = d[i]) {
+            for (j = r[i]; j != i; j = r[j]) {
+                u[d[j]] = u[j]; d[u[j]] = d[j]; --sum[y[j]];
             }
         }
-
-        dlx(0);
-        sort(O, O + cnt);
-        for (i = 0; i < cnt; i++) {
-            printf("%d", (O[i] - 1) % N + 1);
-        }
-        printf("\n");
     }
 
-    return 0;
+    void recover(int c) {
+        int i, j;
+
+        for (i = u[c]; i != c; i = u[i]) {
+            for (j = l[i]; j != i; j = l[j]) {
+                ++sum[y[j]]; u[d[j]] = j; d[u[j]] = j;
+            }
+        }
+        l[r[c]] = c; r[l[c]] = c;
+    }
+
+    int dlx(int dep = 0) {
+        int i, j, c, ret;
+
+        if (!r[0]) return cnt = dep;
+        for (c = i = r[0]; i; i = r[i]) {
+            if (sum[i] < sum[c]) c = i;
+        }
+        cover(c);
+        for (i = d[c]; i != c; i = d[i]) {
+            ans[dep] = x[i];
+            for (j = r[i]; j != i; j = r[j]) cover(y[j]);
+            if (~(ret = dlx(dep + 1))) return ret;
+            for (j = l[i]; j != i; j = l[j]) recover(y[j]);
+        }
+        recover(c);
+
+        return -1;
+    }
+} dlx;
+
+int mat[N][N], cols[N];
+
+inline int encode(int a, int b, int c) {
+    return a * N * N + b * N + c + 1;
+}
+
+inline void decode(int x, int &a, int &b, int &c) {
+    --x;
+    c = x % N; x /= N;
+    b = x % N; x /= N;
+    a = x;
+}
+
+bool solve(int mat[N][N]) {
+    int i, j, x, y, v;
+
+    dlx.init(COL);
+    for (i = 0; i < N; ++i) {
+        for (j = 0; j < N; ++j) {
+            for (v = 0; v < N; ++v) {
+                if (!mat[i][j] || mat[i][j] == v + 1) {
+                    cols[0] = encode(0, i, j);
+                    cols[1] = encode(1, i, v);
+                    cols[2] = encode(2, j, v);
+                    cols[3] = encode(3, i / M * M + j / M, v);
+                    dlx.addRow(encode(i, j, v), cols, 4);
+                }
+            }
+        }
+    }
+    if (dlx.dlx() == -1) return false;
+    for (i = 0; i < dlx.cnt; ++i) {
+        decode(dlx.ans[i], x, y, v);
+        mat[x][y] = v + 1;
+    }
+
+    return true;
 }

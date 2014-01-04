@@ -1,124 +1,81 @@
 // Dancing Links 标准 ECP 模板
-// 行列编号均从1开始，且建立链表过程中必须按原始矩阵从左上到右下顺序插入节点
+// 行列编号均从1开始，dlx 返回值以及 cnt 表示结果行数，dlx 返回 -1 表示无解，ans 记录选择结果
 
 #include <iostream>
 #include <cstdio>
 #include <cstring>
+#include <algorithm>
 
-#define MAXC 1010
-#define MAXR 1010
-#define MAX 200100
+#define MAX 100100
+#define MAXR 1024
+#define MAXC 1024
 
 using namespace std;
 
-int L[MAX], R[MAX], U[MAX], D[MAX], S[MAXC], O[MAXR], X[MAX], Y[MAX];
-int head, tot, cnt, rhead[MAXR];
+struct DLX {
+    int l[MAX], r[MAX], u[MAX], d[MAX], x[MAX], y[MAX];
+    int sum[MAXC], ans[MAXR], tot, cnt;
 
-void init(int c) {
-    int i;
+    void init(int c) {
+        int i;
 
-    head = 0;
-    L[head] = R[head] = head;
-    for (i = 1; i <= c; i++) {
-        L[i] = i - 1;
-        R[i] = R[L[i]];
-        L[R[i]] = R[L[i]] = i;
-        U[i] = D[i] = i;
-        X[i] = 0; Y[i] = i; S[i] = 0;
-    }
-    memset(rhead, -1, sizeof(rhead));
-    tot = c;
-}
-
-void insert(int x, int y) {
-    tot++;
-    if (rhead[x] < 0) {
-        rhead[x] = tot;
-        L[tot] = R[tot] = tot;
-    } else {
-        L[tot] = L[rhead[x]];
-        R[tot] = rhead[x];
-        L[R[tot]] = R[L[tot]] = tot;
-    }
-    U[tot] = U[y];
-    D[tot] = y;
-    U[D[tot]] = D[U[tot]] = tot;
-    X[tot] = x;
-    Y[tot] = y;
-    S[y]++;
-}
-
-void cover(int c) {
-    int i, j;
-
-    L[R[c]] = L[c];
-    R[L[c]] = R[c];
-    for (i = D[c]; i != c; i = D[i]) {
-        for (j = R[i]; j != i; j = R[j]) {
-            U[D[j]] = U[j];
-            D[U[j]] = D[j];
-            --S[Y[j]];
+        for (i = 0; i <= c; ++i) {
+            l[i] = i - 1; r[i] = i + 1; u[i] = i; d[i] = i;
         }
+        l[0] = c; r[c] = 0; tot = c;
+        memset(sum, 0, sizeof(sum));
     }
-}
 
-void recover(int c) {
-    int i, j;
+    void addRow(int row, int *cols, int n) {
+        int cur = tot + 1, col, i;
 
-    for (i = U[c]; i != c; i = U[i]) {
-        for (j = L[i]; j != i; j = L[j]) {
-            U[D[j]] = D[U[j]] = j;
-            ++S[Y[j]];
+        sort(cols, cols + n);
+        for (i = 0; i < n; ++i) {
+            col = cols[i]; ++sum[col]; ++tot;
+            l[tot] = tot - 1; r[tot] = tot + 1; d[tot] = col; u[tot] = u[col];
+            d[u[col]] = tot; u[col] = tot; x[tot] = row; y[tot] = col;
         }
-    }
-    L[R[c]] = R[L[c]] = c;
-}
-
-bool dlx(int dep) {
-    int i, j, c, m = MAXR + 1;
-
-    if (R[head] == head) {
-        cnt = dep;
-        return true;
-    }
-    for (i = R[head]; i != head; i = R[i]) {
-        if (m > S[i]) {
-            m = S[i];
-            c = i;
-        }
+        l[cur] = tot; r[tot] = cur;
     }
 
-    cover(c);
-    for (i = D[c]; i != c; i = D[i]) {
-        for (j = R[i]; j != i; j = R[j]) cover(Y[j]);
-        O[dep] = X[i];
-        if (dlx(dep + 1)) return true;
-        for (j = L[i]; j != i; j = L[j]) recover(Y[j]);
-    }
-    recover(c);
+    void cover(int c) {
+        int i, j;
 
-    return false;
-}
-
-int main() {
-    int n, m, s, i, j, x;
-
-    while (scanf("%d %d", &n, &m) == 2) {
-        init(m);
-        for (i = 1; i <= n; i++) {
-            scanf("%d", &s);
-            for (j = 0; j < s; j++) {
-                scanf("%d", &x);
-                insert(i, x);
+        l[r[c]] = l[c]; r[l[c]] = r[c];
+        for (i = d[c]; i != c; i = d[i]) {
+            for (j = r[i]; j != i; j = r[j]) {
+                u[d[j]] = u[j]; d[u[j]] = d[j]; --sum[y[j]];
             }
         }
-        if (!dlx(0)) printf("NO\n");
-        else {
-            printf("%d", cnt);
-            for (i = 0; i < cnt; i++) printf(" %d", O[i]);
-            printf("\n");
-        }
     }
 
-    return 0;
-}
+    void recover(int c) {
+        int i, j;
+
+        for (i = u[c]; i != c; i = u[i]) {
+            for (j = l[i]; j != i; j = l[j]) {
+                ++sum[y[j]]; u[d[j]] = j; d[u[j]] = j;
+            }
+        }
+        l[r[c]] = c; r[l[c]] = c;
+    }
+
+    int dlx(int dep = 0) {
+        int i, j, c, ret;
+
+        if (!r[0]) return cnt = dep;
+        for (c = i = r[0]; i; i = r[i]) {
+            if (sum[i] < sum[c]) c = i;
+        }
+        cover(c);
+        for (i = d[c]; i != c; i = d[i]) {
+            ans[dep] = x[i];
+            for (j = r[i]; j != i; j = r[j]) cover(y[j]);
+            if (~(ret = dlx(dep + 1))) return ret;
+            for (j = l[i]; j != i; j = l[j]) recover(y[j]);
+        }
+        recover(c);
+
+        return -1;
+    }
+} dlx;
