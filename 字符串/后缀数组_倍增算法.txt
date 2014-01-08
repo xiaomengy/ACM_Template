@@ -1,6 +1,6 @@
 // 倍增算法构造后缀数组 O(nlogn)
 // sa[i] 表示排名为 i 的后缀, rank[i]表示第i个后缀的排名, height[i] 表示 sa[i] 与 sa[i - 1] 最长公共前缀
-// 注意对于 height 数组进行栈扫描的应用
+// 使用时注意在字符串末尾补0，注意对于 height 数组进行栈扫描的应用
 
 #include <iostream>
 #include <cstdio>
