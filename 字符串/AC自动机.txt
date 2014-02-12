@@ -1,4 +1,4 @@
-// AC自动机建立
+﻿// AC自动机建立
 // MAXC 为字符集大小，使用时根据字符集改写 chidx 函数
 // 使用时根据需求修改 acc 标记，并添加 match, solve 等求解函数
 
@@ -12,7 +12,7 @@
 
 using namespace std;
 
-struct ACAutomaton {
+struct ACAutomata {
     struct ACNode {
         int nxt[MAXC], fail, acc;
     } q[MAXN];
