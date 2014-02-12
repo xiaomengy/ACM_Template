@@ -12,7 +12,7 @@
 
 using namespace std;
 
-struct ACAutomaton {
+struct ACAutomata {
     struct ACNode {
         int nxt[MAXC], fail, acc;
     } q[MAXN];
