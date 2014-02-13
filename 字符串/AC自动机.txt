@@ -7,7 +7,7 @@
 #include <cstring>
 
 #define MAXC 26
-#define MAXN 1024
+#define MAXN 2048
 #define MAXL 1024
 
 using namespace std;
