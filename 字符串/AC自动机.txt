@@ -43,7 +43,7 @@ struct ACAutomaton {
 
     void build() {
         int x, y, i;
-        front = rear = 0;
+        front = rear = 0; q[0].fail = -1;
         for (que[rear++] = 0; front < rear; ) {
             for (x = que[front++], i = 0; i < MAXC; ++i) {
                 if (!(y = q[x].nxt[i])) q[x].nxt[i] = x ? q[q[x].fail].nxt[i] : 0;
