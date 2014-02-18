@@ -1,6 +1,7 @@
 // 倍增算法构造后缀数组 O(nlogn)
 // sa[i] 表示排名为 i 的后缀, rank[i]表示第i个后缀的排名, height[i] 表示 sa[i] 与 sa[i - 1] 最长公共前缀
 // 支持对于任意类型子序列进行求解，主意原序列中所有数据为正，原序列范围较大需要离散化
+// 注意需要手动调用 calHeight()
 
 #include <iostream>
 #include <cstdio>
