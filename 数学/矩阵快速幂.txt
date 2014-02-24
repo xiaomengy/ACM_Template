@@ -1,0 +1,57 @@
+// 矩阵快速幂模板类，支持 int, long long, double 等类型
+// p 为取模参数，p == -1 表示不取模
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAX 128
+
+using namespace std;
+
+typedef long long i64;
+
+template<typename T>
+struct Matrix {
+    T mat[MAX][MAX];
+    static int n, p;
+
+    Matrix() {}
+    Matrix(T x) {
+        int i;
+        memset(mat, 0, sizeof(mat));
+        for (i = 0; i < n; ++i) mat[i][i] = x;
+    }
+
+    static void resize(int _n) { n = _n; }
+    static void setMod(int _p) { p = _p; }
+
+    T *operator [](int k) { return mat[k]; }
+
+    Matrix<T> operator *(const Matrix<T> &o) const {
+        Matrix ret(0);
+        int i, j, k;
+        for (i = 0; i < n; ++i) {
+            for (k = 0; k < n; ++k) {
+                if (!mat[i][k]) continue;
+                for (j = 0; j < n; ++j) {
+                    ret.mat[i][j] += mat[i][k] * o.mat[k][j];
+                    if (~p) ret.mat[i][j] %= p;
+                }
+            }
+        }
+        return ret;
+    }
+
+    Matrix<T> pow(i64 x) const {
+        Matrix<T> ret(1), a = *this;
+        for ( ; x; x >>= 1) {
+            if (x & 1) ret = ret * a;
+            a = a * a;
+        }
+        return ret;
+    }
+};
+
+template<typename T> int Matrix<T>::n = 0;
+template<typename T> int Matrix<T>::p = -1;
