@@ -1,5 +1,5 @@
 // 辛普森方法求定积分
-// fun为被积函数，l为积分下限，r为积分上限，eps为精度限制
+// fun为被积函数，如有其它参数可定义为 Functor，l为积分下限，r为积分上限，eps为精度限制
 
 #include <iostream>
 #include <cstdio>
@@ -8,16 +8,19 @@
 
 using namespace std;
 
-inline double simpson(double (*fun)(double x), double l, double r) {
-    return (fun(l) + 4 * fun((l + r) / 2) + fun(r)) * (r - l) / 6;
+template<typename Func>
+inline double simpson(const Func &func, double l, double r) {
+    return (func(l) + 4.0 * func((l + r) / 2.0) + func(r)) * (r - l) / 6.0;
 }
 
-double calc(double (*fun)(double x), double l, double r, double s, double eps) {
-    double m = (l + r) / 2, a = simpson(fun, l, m), b = simpson(fun, m, r);
-    if (fabs(a + b - s) < 15 * eps) return a + b + (a + b - s) / 15;
-    return calc(fun, l, m, a, eps) + calc(fun, m, r, b, eps);
+template<typename Func>
+double calc(const Func &func, double l, double r, double s, double eps) {
+    double m = (l + r) / 2.0, a = simpson(func, l, m), b = simpson(func, m, r);
+    if (fabs(a + b - s) < 15.0 * eps) return a + b + (a + b - s) / 15.0;
+    return calc(func, l, m, a, eps) + calc(func, m, r, b, eps);
 }
 
-inline double integral(double (*fun)(double x), double l, double r, double eps = 1e-8) {
-    return calc(fun, l, r, simpson(fun, l, r), eps);
+template<typename Func>
+inline double integral(const Func &func, double l, double r, double eps = 1e-8) {
+    return calc(func, l, r, simpson(func, l, r), eps);
 }
