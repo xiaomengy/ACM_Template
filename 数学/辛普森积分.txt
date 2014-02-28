@@ -1,5 +1,5 @@
 // 辛普森方法求定积分
-// fun为被积函数，如有其它参数可定义为 Functor，l为积分下限，r为积分上限，eps为精度限制
+// func为被积函数，如有其它参数可定义为 Functor，l为积分下限，r为积分上限，eps为精度限制
 
 #include <iostream>
 #include <cstdio>
