@@ -17,7 +17,7 @@ struct Matrix {
     static int n, p;
 
     Matrix() {}
-    Matrix(T x) {
+    Matrix(const T &x) {
         int i;
         memset(mat, 0, sizeof(mat));
         for (i = 0; i < n; ++i) mat[i][i] = x;
