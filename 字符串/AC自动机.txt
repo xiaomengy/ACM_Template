@@ -17,14 +17,14 @@ struct ACAutomaton {
         int nxt[MAXC], fail, acc;
         Node() : fail(-1), acc(0) { memset(nxt, -1, sizeof(nxt)); }
     } q[MAXN];
-
+	
     int que[MAXN], front, rear, sz;
 
-    static int chidx(char ch) { return ch - 'A'; }
-
     Node &operator [](int k) { return q[k]; }
-
-    int size() const { return sz; }
+	
+	int size() const { return sz; }
+	
+	int chidx(char ch) const { return ch - 'A'; }
 
     void clear() {
         fill(q, q + MAXN, Node());
