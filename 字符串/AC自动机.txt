@@ -7,35 +7,34 @@
 #include <cstring>
 
 #define MAXC 26
-#define MAXN 2048
-#define MAXL 1024
+#define MAXN 1010
+#define MAXL 1010
 
 using namespace std;
 
 struct ACAutomaton {
-    struct ACNode {
+    struct Node {
         int nxt[MAXC], fail, acc;
+        Node() : fail(-1), acc(0) { memset(nxt, -1, sizeof(nxt)); }
     } q[MAXN];
 
-    int que[MAXN], front, rear, tot;
+    int que[MAXN], front, rear, sz;
 
-    static int chidx(char ch) {
-        return ch - 'A';
-    }
+    static int chidx(char ch) { return ch - 'A'; }
 
-    ACNode &operator [](int k) {
-        return q[k];
-    }
+    Node &operator [](int k) { return q[k]; }
+
+    int size() const { return sz; }
 
     void clear() {
-        memset(q, 0, sizeof(q));
-        tot = 1;
+        fill(q, q + MAXN, Node());
+        sz = 1;
     }
 
     void insert(const char *str) {
         int i;
         for (i = 0; *str; ++str) {
-            if (!q[i].nxt[chidx(*str)]) q[i].nxt[chidx(*str)] = tot++;
+            if (q[i].nxt[chidx(*str)] == -1) q[i].nxt[chidx(*str)] = sz++;
             i = q[i].nxt[chidx(*str)];
         }
         q[i].acc = 1;
@@ -43,10 +42,10 @@ struct ACAutomaton {
 
     void build() {
         int x, y, i;
-        front = rear = 0; q[0].fail = -1;
+        front = rear = 0;
         for (que[rear++] = 0; front < rear; ) {
             for (x = que[front++], i = 0; i < MAXC; ++i) {
-                if (!(y = q[x].nxt[i])) q[x].nxt[i] = x ? q[q[x].fail].nxt[i] : 0;
+                if ((y = q[x].nxt[i]) == -1) q[x].nxt[i] = x ? q[q[x].fail].nxt[i] : 0;
                 else {
                     q[y].fail = x ? q[q[x].fail].nxt[i] : 0;
                     q[y].acc |= q[q[y].fail].acc;
@@ -56,4 +55,3 @@ struct ACAutomaton {
         }
     }
 } ac;
-
