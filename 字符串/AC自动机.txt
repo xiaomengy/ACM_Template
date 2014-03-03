@@ -22,9 +22,9 @@ struct ACAutomaton {
 
     Node &operator [](int k) { return q[k]; }
 	
-	int size() const { return sz; }
+    int size() const { return sz; }
 	
-	int chidx(char ch) const { return ch - 'A'; }
+    int chidx(char ch) const { return ch - 'A'; }
 
     void clear() {
         fill(q, q + MAXN, Node());
