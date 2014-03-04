@@ -1,0 +1,80 @@
+// 后缀自动机构造
+// MAXC 表示字符集大小, MAXL 表示模式串长度, sort() 对结点拓扑排序保存在vx中, link() 构建完全自动机
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+
+#define MAXC 26
+#define MAXL 100010
+
+using namespace std;
+
+template<typename T = char>
+struct SuffixAutomaton {
+    struct Node {
+        int nxt[MAXC], fail, len, acc;
+        Node() : fail(-1), len(0), acc(0) { memset(nxt, -1, sizeof(nxt)); }
+    } q[MAXL << 1];
+
+    int vx[MAXL << 1], c[MAXL], last, sz;
+
+    Node &operator [](int k) { return q[k]; }
+
+    int size() const { return sz; }
+
+    int chidx(const T &ch) const { return ch - 'a'; }
+
+    void clear() {
+        fill(q, q + (MAXL << 1), Node());
+        last = 0; sz = 1;
+    }
+
+    void extend(int w) {
+        int x = sz++, y, u, v;
+
+        q[x].len = q[last].len + 1;
+        for (u = last; ~u && q[u].nxt[w] == -1; u = q[u].fail) q[u].nxt[w] = x;
+        if (u == -1) q[x].fail = 0;
+        else {
+            if (q[v = q[u].nxt[w]].len == q[u].len + 1) q[x].fail = v;
+            else {
+                q[y = sz++].len = q[u].len + 1;
+                memcpy(q[y].nxt, q[v].nxt, sizeof(q[y].nxt));
+                q[y].fail = q[v].fail; q[v].fail = y; q[x].fail = y;
+                for ( ; ~u && q[u].nxt[w] == v; u = q[u].fail) q[u].nxt[w] = y;
+            }
+        }
+        last = x;
+    }
+
+    void build(const T *str, int n) {
+        int i;
+        clear();
+        for (i = 0; i < n; ++i) extend(chidx(str[i]));
+        for (i = last; ~i; i = q[i].fail) q[i].acc = 1;
+    }
+
+    void sort() {
+        int i;
+        memset(c, 0, sizeof(c));
+        for (i = 0; i < sz; ++i) ++c[q[i].len];
+        for (i = 1; i <= q[last].len; ++i) c[i] += c[i - 1];
+        for (i = 0; i < sz; ++i) vx[--c[q[i].len]] = i;
+    }
+
+    void link() {
+        int x, i;
+        sort();
+        for (x = 0; x < sz; ++x) {
+            for (i = 0; i < MAXC; ++i) {
+                if (q[vx[x]].nxt[i] == -1) {
+                    q[vx[x]].nxt[i] = i ? q[q[vx[x]].fail].nxt[i] : 0;
+                }
+            }
+        }
+    }
+};
+
+SuffixAutomaton<> sam;
