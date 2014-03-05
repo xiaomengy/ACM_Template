@@ -18,7 +18,7 @@ struct SuffixAutomaton {
         Node() : fail(-1), len(0), acc(0) { memset(nxt, -1, sizeof(nxt)); }
     } q[MAXL << 1];
 
-    int vx[MAXL << 1], c[MAXL], last, sz, sum;
+    int vx[MAXL << 1], c[MAXL], last, sz;
     HashFunc chidx;
 
     Node &operator [](int k) { return q[k]; }
@@ -27,7 +27,7 @@ struct SuffixAutomaton {
 
     void clear() {
         fill(q, q + (MAXL << 1), Node());
-        last = 0; sz = 1; sum = 0;
+        last = 0; sz = 1;
     }
 
     void extend(int w) {
@@ -40,15 +40,12 @@ struct SuffixAutomaton {
             if (q[v = q[u].nxt[w]].len == q[u].len + 1) q[x].fail = v;
             else {
                 q[y = sz++].len = q[u].len + 1;
-                sum -= q[v].len - q[q[v].fail].len;
                 memcpy(q[y].nxt, q[v].nxt, sizeof(q[y].nxt));
                 q[y].fail = q[v].fail; q[v].fail = y; q[x].fail = y;
                 for ( ; ~u && q[u].nxt[w] == v; u = q[u].fail) q[u].nxt[w] = y;
-                sum += q[y].len - q[q[y].fail].len + q[v].len - q[q[v].fail].len;
             }
         }
         last = x;
-        sum += q[x].len - q[q[x].fail].len;
     }
 
     void build(const T *str, int n) {
@@ -72,7 +69,7 @@ struct SuffixAutomaton {
         for (x = 0; x < sz; ++x) {
             for (i = 0; i < MAXC; ++i) {
                 if (q[vx[x]].nxt[i] == -1) {
-                    q[vx[x]].nxt[i] = i ? q[q[vx[x]].fail].nxt[i] : 0;
+                    q[vx[x]].nxt[i] = vx[x] ? q[q[vx[x]].fail].nxt[i] : 0;
                 }
             }
         }
@@ -80,7 +77,7 @@ struct SuffixAutomaton {
 };
 
 struct HashFunc {
-    int operator ()(char ch) const { return ch - 'a'; }
+    int operator ()(char ch) const { return ch - 'A'; }
 };
 
 SuffixAutomaton<char, HashFunc> sam;
