@@ -12,7 +12,7 @@
 
 using namespace std;
 
-template<typename T = char>
+template<typename T, typename HashFunc>
 struct ACAutomaton {
     struct Node {
         int nxt[MAXC], fail, acc;
@@ -20,8 +20,7 @@ struct ACAutomaton {
     } q[MAXN];
 
     int que[MAXN], front, rear, sz;
-
-    int chidx(const T &ch) const { return ch - 'A'; }
+    HashFunc chidx;
 
     Node &operator [](int k) { return q[k]; }
 
@@ -57,4 +56,9 @@ struct ACAutomaton {
     }
 };
 
-ACAutomaton<> ac;
+struct HashFunc {
+    int operator ()(char ch) const { return ch - 'A'; }
+};
+
+ACAutomaton<char, HashFunc> ac;
+
