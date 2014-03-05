@@ -24,7 +24,7 @@ struct SuffixAutomaton {
 
     int size() const { return sz; }
 
-    int chidx(const T &ch) const { return ch - 'a'; }
+    int chidx(const T &ch) const { return ch - 'A'; }
 
     void clear() {
         fill(q, q + (MAXL << 1), Node());

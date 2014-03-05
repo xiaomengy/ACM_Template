@@ -7,37 +7,38 @@
 #include <cstring>
 
 #define MAXC 26
-#define MAXN 1024
-#define MAXL 1024
+#define MAXN 1010
+#define MAXL 1010
 
 using namespace std;
 
+template<typename T = char>
 struct ACAutomaton {
     struct Node {
         int nxt[MAXC], fail, acc;
         Node() : fail(-1), acc(0) { memset(nxt, -1, sizeof(nxt)); }
     } q[MAXN];
-	
+
     int que[MAXN], front, rear, sz;
 
+    int chidx(const T &ch) const { return ch - 'A'; }
+
     Node &operator [](int k) { return q[k]; }
-	
+
     int size() const { return sz; }
-	
-    int chidx(char ch) const { return ch - 'A'; }
 
     void clear() {
         fill(q, q + MAXN, Node());
         sz = 1;
     }
 
-    void insert(const char *str) {
-        int i;
-        for (i = 0; *str; ++str) {
-            if (q[i].nxt[chidx(*str)] == -1) q[i].nxt[chidx(*str)] = sz++;
-            i = q[i].nxt[chidx(*str)];
+    void insert(const T *str, int n) {
+        int x = 0, i;
+        for (i = 0; i < n; ++i) {
+            if (q[x].nxt[chidx(str[i])] == -1) q[x].nxt[chidx(str[i])] = sz++;
+            x = q[x].nxt[chidx(str[i])];
         }
-        q[i].acc = 1;
+        q[x].acc = 1;
     }
 
     void build() {
@@ -54,4 +55,6 @@ struct ACAutomaton {
             }
         }
     }
-} ac;
+};
+
+ACAutomaton<> ac;
