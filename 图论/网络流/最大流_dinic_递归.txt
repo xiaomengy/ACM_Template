@@ -1,81 +1,83 @@
-// 递归版dinic
+// 递归版dinic，src为源点，dst为汇点，点编号从0开始
 
 #include <iostream>
 #include <cstdio>
 #include <cstring>
 
-#define MAXV 20010
-#define MAXE 1000010
+#define MAXV 1024
+#define MAXE 100010
 #define INF 0x3F3F3F3F
 
 using namespace std;
 
-struct Edge {
-    int ed, flow, next;
-} edge[MAXE];
+template<typename F = int>
+struct MaxFlow {
+    struct Edge {
+        int ed, nxt;
+        F flow;
+        Edge() {}
+        Edge(int e, int n, F f) : ed(e), nxt(n), flow(f) {}
+    } edge[MAXE];
 
-int head[MAXV], nEdge;
-int dis[MAXV], cur[MAXV], que[MAXV], front, rear;
+    int head[MAXV], nV, nE;
+    int dis[MAXV], cur[MAXV], que[MAXV], front, rear;
 
-inline void init() {
-    memset(head, -1, sizeof(head));
-    nEdge = 0;
-}
-
-inline void addEdge(int a, int b, int flow) {
-    edge[nEdge].ed = b;
-    edge[nEdge].flow = flow;
-    edge[nEdge].next = head[a];
-    head[a] = nEdge++;
-    edge[nEdge].ed = a;
-    edge[nEdge].flow = 0;
-    edge[nEdge].next = head[b];
-    head[b] = nEdge++;
-}
-
-int dfs(int x, int dst, int pre) {
-    int i, y, curFlow = pre, d;
-
-    if (x == dst) return pre;
-    for (i = cur[x]; ~i; i = edge[i].next) {
-        if (edge[i].flow && dis[y = edge[i].ed] == dis[x] + 1) {
-            cur[x] = i;
-            d = dfs(y, dst, min(curFlow, edge[i].flow));
-            edge[i].flow -= d; edge[i ^ 1].flow += d;
-            if (!(curFlow -= d)) break;
-        }
+    void init(int v) {
+        memset(head, -1, sizeof(head));
+        nV = v; nE = 0;
     }
-    if (curFlow) dis[x] = -1;
 
-    return pre - curFlow;
-}
+    void addEdge(int a, int b, F f) {
+        edge[nE] = Edge(b, head[a], f); head[a] = nE++;
+        edge[nE] = Edge(a, head[b], 0); head[b] = nE++;
+    }
 
-bool bfs(int src, int dst) {
-    int i, x, y;
+    F dfs(int x, int dst, F pre) {
+        int i, y;
+        F curFlow = pre, d;
 
-    memset(dis, -1, sizeof(dis));
-    front = rear = 0;
-    dis[que[rear++] = src] = 0;
-    while (front < rear) {
-        for (i = head[x = que[front++]]; ~i; i = edge[i].next) {
-            if (edge[i].flow && dis[y = edge[i].ed] == -1) {
-                dis[que[rear++] = y] = dis[x] + 1;
-                if (y == dst) return true;
+        if (x == dst) return pre;
+        for (i = cur[x]; ~i; i = edge[i].nxt) {
+            if (edge[i].flow && dis[y = edge[i].ed] == dis[x] + 1) {
+                cur[x] = i;
+                d = dfs(y, dst, min(curFlow, edge[i].flow));
+                edge[i].flow -= d; edge[i ^ 1].flow += d;
+                if (!(curFlow -= d)) break;
             }
         }
+        if (curFlow) dis[x] = -1;
+
+        return pre - curFlow;
     }
 
-    return false;
-}
+    bool bfs(int src, int dst) {
+        int i, x, y;
 
-int dinic(int v, int src, int dst) {
-    int i, totalFlow = 0;
+        memset(dis, -1, sizeof(dis));
+        front = rear = 0;
+        for (dis[que[rear++] = src] = 0; front < rear; ) {
+            for (i = head[x = que[front++]]; ~i; i = edge[i].nxt) {
+                if (edge[i].flow && dis[y = edge[i].ed] == -1) {
+                    dis[que[rear++] = y] = dis[x] + 1;
+                    if (y == dst) return true;
+                }
+            }
+        }
 
-    if (src == dst) return INF;
-    while (bfs(src, dst)) {
-        memcpy(cur, head, sizeof(head));
-        totalFlow += dfs(src, dst, INF);
+        return false;
     }
 
-    return totalFlow;
-}
+    F dinic(int src, int dst) {
+        F totalFlow = 0;
+
+        if (src == dst) return INF;
+        while (bfs(src, dst)) {
+            memcpy(cur, head, sizeof(head));
+            totalFlow += dfs(src, dst, INF);
+        }
+
+        return totalFlow;
+    }
+};
+
+MaxFlow<> maxFlow;
