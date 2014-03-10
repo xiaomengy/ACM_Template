@@ -1,83 +1,79 @@
 // 最小费用最大流spfa求增广路算法模板
-// 边的标号从0开始，反向边 ^1 即可
-// 最小费用可行流只需修改费用不能减小即退出即可
-// spfa带有 SLF 优化
+// isFeasible = true 表示最小费用可行流
 
 #include <iostream>
 #include <cstdio>
 #include <cstring>
-#include <algorithm>
 
-#define MAXV 510
+#define MAXV 1024
 #define MAXE 100010
-#define INF 0x3F3F3F3F
+#define INF 1000000000
 
 using namespace std;
 
-typedef int F;
-typedef int C;
+template<typename F = int, typename C = int>
+struct MinCostFlow {
+    struct Edge {
+        int ed, nxt;
+        F flow;
+        C cost;
+        Edge() {}
+        Edge(int e, int n, int f, int c) :
+            ed(e), nxt(n), flow(f), cost(c) {}
+    } edge[MAXE];
 
-struct Edge {
-    int ed, next;
-	F flow;
-	C cost;
-} edge[MAXE];
+    int head[MAXV], nV, nE;
+    int pre[MAXV], now[MAXV], que[MAXV * MAXV * 2], front, rear;
+    F his[MAXV];
+    C dis[MAXV];
+    bool vis[MAXV];
 
-int head[MAXV], nEdge;
-int pre[MAXV], now[MAXV], que[MAXV * MAXV * 2], front, rear;
-F his[MAXV];
-C dis[MAXV];
-bool vis[MAXV];
+    void init(int v) {
+        memset(head, -1, sizeof(head));
+        nV = v; nE = 0;
+    }
 
-inline void init() {
-	memset(head, -1, sizeof(head));
-	nEdge = 0;
-}
+    void addEdge(int a, int b, F f, C c) {
+        edge[nE] = Edge(b, head[a], f,  c); head[a] = nE++;
+        edge[nE] = Edge(a, head[b], 0, -c); head[b] = nE++;
+    }
 
-inline void _addEdge(int a, int b, F f, C c) {
-    edge[nEdge].ed = b;
-    edge[nEdge].flow = f;
-    edge[nEdge].cost = c;
-    edge[nEdge].next = head[a];
-    head[a] = nEdge++;
-}
+    F minCostFlow(int src, int dst, C &netCost, bool isFeasible = false) {
+        int i, x, y;
+        F totFlow = 0;
 
-inline void addEdge(int a, int b, F f, C c) {
-    _addEdge(a, b, f, c);
-    _addEdge(b, a, 0, -c);
-}
-
-F minCostMaxFlow(int v, int src, int dst, C &netCost) {
-    int i, x, y;
-	F totalFlow = 0;
-
-    for (netCost = 0; ;) {
-		memset(dis, 0x3F, sizeof(dis));
-        memset(vis, 0, sizeof(vis));
-		front = rear = v;
-        dis[src] = 0; his[src] = INF;
-		vis[que[rear++] = src] = true;
-        while (front < rear) {
-            vis[x = que[front++]] = false;
-            for (i = head[x]; ~i; i = edge[i].next) {
-                if (edge[i].flow && dis[y = edge[i].ed] > dis[x] + edge[i].cost) {
-                    dis[y] = dis[x] + edge[i].cost;
-                    pre[y] = x; now[y] = i; his[y] = min(his[x], edge[i].flow);
-                    if (!vis[y]) {
-                        if (front < rear && dis[y] < dis[que[front]]) que[--front] = y;
-                        else que[rear++] = y;
-                        vis[y] = true;
+        for (netCost = 0; ; ) {
+            memset(dis, 0x3F, sizeof(dis));
+            memset(vis, 0, sizeof(vis));
+            front = rear = nV;
+            dis[src] = 0; his[src] = INF;
+            vis[que[rear++] = src] = true;
+            while (front < rear) {
+                vis[x = que[front++]] = false;
+                for (i = head[x]; ~i; i = edge[i].nxt) {
+                    if (edge[i].flow && dis[y = edge[i].ed] > dis[x] + edge[i].cost) {
+                        dis[y] = dis[x] + edge[i].cost;
+                        pre[y] = x; now[y] = i; his[y] = min(his[x], edge[i].flow);
+                        if (!vis[y]) {
+                            if (front < rear && dis[y] < dis[que[front]]) que[--front] = y;
+                            else que[rear++] = y;
+                            vis[y] = true;
+                        }
                     }
                 }
             }
+            if (dis[dst] == INF) break;
+            if (isFeasible && dis[dst] >= 0) break;
+            totFlow += his[dst]; netCost += dis[dst] * his[dst];
+            for (i = dst; i != src; i = pre[i]) {
+                edge[now[i]].flow -= his[dst];
+                edge[now[i] ^ 1].flow += his[dst];
+            }
         }
-        if (dis[dst] == INF) break;
-        totalFlow += his[dst]; netCost += dis[dst] * his[dst];
-        for (i = dst; i != src; i = pre[i]) {
-            edge[now[i]].flow -= his[dst];
-			edge[now[i] ^ 1].flow += his[dst];
-        }
-    }
 
-    return totalFlow;
-}
+        return totFlow;
+    }
+};
+
+MinCostFlow<> graph;
+

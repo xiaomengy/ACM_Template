@@ -5,7 +5,7 @@
 #include <cstdio>
 #include <cstring>
 
-#define MAXV 256
+#define MAXV 1024
 #define MAXE 100010
 #define INF 0x3F3F3F3F
 
