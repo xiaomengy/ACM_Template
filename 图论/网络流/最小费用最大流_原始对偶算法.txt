@@ -1,4 +1,4 @@
-// 费用流原始-对偶算法
+// 费用流原始-对偶算法，isFeasible = true 表示最小费用可行流
 // 除第一次标号外可以用dijkstra代替SPFA，若费用非负则可全部使用dijkstra
 
 #include <iostream>
@@ -11,96 +11,92 @@
 
 using namespace std;
 
-typedef int F;
-typedef int C;
+template<typename F = int, typename C = int>
+struct MinCostFlow {
+    struct Edge {
+        int u, v, nxt;
+        F flow;
+        C cost;
+        Edge() {}
+        Edge(int _u, int _v, int n, int f, int c) :
+            u(_u), v(_v), nxt(n), flow(f), cost(c) {}
+    } edge[MAXE];
 
-struct Edge {
-    int u, v, next;
-	F flow;
-	C cost;
-} edge[MAXE];
+    int head[MAXV], nV, nE;
+    int cur[MAXV], que[MAXV * MAXV * 2], front, rear;
+    C dis[MAXV];
+    bool vis[MAXV];
 
-int head[MAXV], nEdge;
-int cur[MAXV], que[MAXV * MAXV * 2], front, rear;
-C dis[MAXV];
-bool vis[MAXV];
-
-inline void init() {
-	memset(head, -1, sizeof(head));
-	nEdge = 0;
-}
-
-inline void _addEdge(int a, int b, F f, C c) {
-    edge[nEdge].u = a;
-    edge[nEdge].v = b;
-    edge[nEdge].flow = f;
-    edge[nEdge].cost = c;
-    edge[nEdge].next = head[a];
-    head[a] = nEdge++;
-}
-
-inline void addEdge(int a, int b, F f, C c) {
-    _addEdge(a, b, f, c);
-    _addEdge(b, a, 0, -c);
-}
-
-F dfs(int x, int dst, F pre) {
-    int i, y;
-	F curFlow = pre, d;
-
-    if (x == dst) return pre;
-    for (vis[x] = true, i = cur[x]; ~i; i = edge[i].next) {
-        if (edge[i].flow && !edge[i].cost && !vis[y = edge[i].v]) {
-            cur[x] = i;
-            d = dfs(y, dst, min(curFlow, edge[i].flow));
-            edge[i].flow -= d; edge[i ^ 1].flow += d;
-            if (!(curFlow -= d)) break;
-        }
+    void init(int v) {
+        memset(head, -1, sizeof(head));
+        nV = v; nE = 0;
     }
-    if (!curFlow) vis[x] = false;
 
-    return pre - curFlow;
-}
+    void addEdge(int a, int b, F f, C c) {
+        edge[nE] = Edge(a, b, head[a], f,  c); head[a] = nE++;
+        edge[nE] = Edge(b, a, head[b], 0, -c); head[b] = nE++;
+    }
 
-bool spfa(int v, int src, int dst) {
-    int i, x, y;
+    F dfs(int x, int dst, F pre) {
+        int i, y;
+        F curFlow = pre, d;
 
-    memset(dis, 0x3F, sizeof(dis));
-    memset(vis, 0, sizeof(vis));
-    front = rear = v;
-    dis[src] = 0; vis[que[rear++] = src] = true;
-    while (front < rear) {
-        vis[x = que[front++]] = false;
-        for (i = head[x]; ~i; i = edge[i].next) {
-            if (edge[i].flow && dis[y = edge[i].v] > dis[x] + edge[i].cost) {
-                dis[y] = dis[x] + edge[i].cost;
-                if (!vis[y]) {
-                    if (front < rear && dis[y] < dis[que[front]]) que[--front] = y;
-                    else que[rear++] = y;
-                    vis[y] = true;
+        if (x == dst) return pre;
+        for (vis[x] = true, i = cur[x]; ~i; i = edge[i].nxt) {
+            if (edge[i].flow && !edge[i].cost && !vis[y = edge[i].v]) {
+                cur[x] = i;
+                d = dfs(y, dst, min(curFlow, edge[i].flow));
+                edge[i].flow -= d; edge[i ^ 1].flow += d;
+                if (!(curFlow -= d)) break;
+            }
+        }
+        if (!curFlow) vis[x] = false;
+
+        return pre - curFlow;
+    }
+
+    bool spfa(int src, int dst) {
+        int i, x, y;
+
+        memset(dis, 0x3F, sizeof(dis));
+        memset(vis, 0, sizeof(vis));
+        front = rear = nV;
+        dis[src] = 0; vis[que[rear++] = src] = true;
+        while (front < rear) {
+            vis[x = que[front++]] = false;
+            for (i = head[x]; ~i; i = edge[i].nxt) {
+                if (edge[i ^ 1].flow && dis[y = edge[i].v] > dis[x] - edge[i].cost) {
+                    dis[y] = dis[x] - edge[i].cost;
+                    if (!vis[y]) {
+                        if (front < rear && dis[y] < dis[que[front]]) que[--front] = y;
+                        else que[rear++] = y;
+                        vis[y] = true;
+                    }
                 }
             }
         }
+
+        return dis[dst] < INF;
     }
 
-    return dis[dst] < INF;
-}
+    F minCostFlow(int src, int dst, C &netCost, bool isFeasible = false) {
+        int i;
+        F curFlow, totFlow = 0;
+        C d = 0;
 
-F minCostMaxFlow(int v, int src, int dst, C &netCost) {
-    int i;
-	F curFlow, totalFlow = 0;
-	C d = 0;
+        for (netCost = 0; spfa(dst, src); ) {
+            if ((d += dis[src]) >= 0 && isFeasible) break;
+            for (i = 0; i < nE; ++i) edge[i].cost += dis[edge[i].v] - dis[edge[i].u];
+            for ( ; ; totFlow += curFlow, netCost += d * curFlow) {
+                memcpy(cur, head, sizeof(head));
+                memset(vis, 0, sizeof(vis));
+                if (!(curFlow = dfs(src, dst, INF))) break;
+            }
+        }
 
-    for (netCost = 0; spfa(v, src, dst); ) {
-        d += dis[dst];								// 最小费用最大流
-        //if ((d += dis[dst]) >= 0) break;			// 最小费用可行流
-        for (i = 0; i < nEdge; ++i) edge[i].cost += dis[edge[i].u] - dis[edge[i].v];
-        memcpy(cur, head, sizeof(head));
-        memset(vis, 0, sizeof(vis));
-        curFlow = dfs(src, dst, INF);
-        totalFlow += curFlow; netCost += d * curFlow;
+        return totFlow;
     }
+};
 
-    return totalFlow;
-}
+MinCostFlow<> graph;
 
