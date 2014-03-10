@@ -4,76 +4,73 @@
 #include <cstdio>
 #include <cstring>
 
-#define MAXV 20010
-#define MAXE 2000000
+#define MAXV 1024
+#define MAXE 100010
 #define INF 0x3F3F3F3F
 
 using namespace std;
 
-typedef int F;
+template<typename F = int>
+struct MaxFlow {
+    struct Edge {
+        int ed, nxt;
+        F flow;
+        Edge() {}
+        Edge(int e, int n, F f) : ed(e), nxt(n), flow(f) {}
+    } edge[MAXE];
 
-struct Edge {
-    int ed, next;
-    F flow;
-} edge[MAXE];
+    int head[MAXV], nV, nE;
+    int dis[MAXV], pre[MAXV], arc[MAXV], cur[MAXV], cnt[MAXV];
+    F his[MAXV];
 
-int head[MAXV], nEdge;
-int d[MAXV], pre[MAXV], path[MAXV], cur[MAXV], vh[MAXV];
-F his[MAXV];
-
-inline void init() {
-    memset(head, -1, sizeof(head));
-    nEdge = 0;
-}
-
-inline void _addEdge(int a, int b, F flow) {
-    edge[nEdge].ed = b;
-    edge[nEdge].flow = flow;
-    edge[nEdge].next = head[a];
-    head[a] = nEdge++;
-}
-
-inline void addEdge(int a, int b, F flow) {
-    _addEdge(a, b, flow);
-    _addEdge(b, a, 0);
-}
-
-F sap(int v, int src, int dst) {
-    int x, y, i, m;
-    F nowFlow = INF, totalFlow = 0;
-    bool flag;
-
-    memset(d, 0, sizeof(d));
-    memset(vh, 0, sizeof(vh));
-    memcpy(cur, head, sizeof(cur));
-    for (vh[0] = v, x = src; d[src] < v;) {
-        his[x] = nowFlow; flag = false;
-        for (i = cur[x]; ~i; i = edge[i].next) {
-            if (edge[i].flow && d[x] == d[y = edge[i].ed] + 1) {
-                flag = true;
-                nowFlow = min(nowFlow, edge[i].flow);
-                pre[y] = x; path[y] = cur[x] = i;
-                if ((x = y) == dst) {
-                    for (totalFlow += nowFlow; x != src; x = pre[x]) {
-                        edge[path[x]].flow -= nowFlow;
-                        edge[path[x] ^ 1].flow += nowFlow;
-                    }
-                    nowFlow = INF;
-                }
-                break;
-            }
-        }
-        if (!flag) {
-            for (m = v - 1, i = cur[x] = head[x]; ~i; i = edge[i].next) {
-                if (edge[i].flow && d[y = edge[i].ed] < m) {
-                    m = d[y]; cur[x] = i;
-                }
-            }
-            if (!(--vh[d[x]])) break;
-            ++vh[d[x] = m + 1];
-            if (x != src) nowFlow = his[x = pre[x]];
-        }
+    void init(int v) {
+        memset(head, -1, sizeof(head));
+        nV = v; nE = 0;
     }
 
-    return totalFlow;
-}
+    void addEdge(int a, int b, F f) {
+        edge[nE] = Edge(b, head[a], f); head[a] = nE++;
+        edge[nE] = Edge(a, head[b], 0); head[b] = nE++;
+    }
+
+    F sap(int src, int dst) {
+        int x, y, i, m;
+        F curFlow = INF, totFlow = 0;
+        bool flag;
+
+        memset(dis, 0, sizeof(dis));
+        memset(cnt, 0, sizeof(cnt));
+        memcpy(cur, head, sizeof(cur));
+        for (cnt[0] = nV, x = src; dis[src] < nV; ) {
+            his[x] = curFlow; flag = false;
+            for (i = cur[x]; ~i; i = edge[i].nxt) {
+                if (edge[i].flow && dis[x] == dis[y = edge[i].ed] + 1) {
+                    flag = true; curFlow = min(curFlow, edge[i].flow);
+                    pre[y] = x; arc[y] = cur[x] = i;
+                    if ((x = y) == dst) {
+                        for (totFlow += curFlow; x != src; x = pre[x]) {
+                            edge[arc[x]].flow -= curFlow;
+                            edge[arc[x] ^ 1].flow += curFlow;
+                        }
+                        curFlow = INF;
+                    }
+                    break;
+                }
+            }
+            if (!flag) {
+                for (m = nV - 1, i = cur[x] = head[x]; ~i; i = edge[i].nxt) {
+                    if (edge[i].flow && dis[y = edge[i].ed] < m) {
+                        m = dis[y]; cur[x] = i;
+                    }
+                }
+                if (!(--cnt[dis[x]])) break;
+                ++cnt[dis[x] = m + 1];
+                if (x != src) curFlow = his[x = pre[x]];
+            }
+        }
+
+        return totFlow;
+    }
+};
+
+MaxFlow<> maxFlow;
