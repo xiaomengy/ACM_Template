@@ -38,7 +38,7 @@ struct MaxFlow {
 
         if (x == dst) return pre;
         for (i = cur[x]; ~i; i = edge[i].nxt) {
-            if (edge[i].flow && dis[y = edge[i].ed] == dis[x] + 1) {
+            if (edge[i].flow && dis[y = edge[i].ed] == dis[x] - 1) {
                 cur[x] = i;
                 d = dfs(y, dst, min(curFlow, edge[i].flow));
                 edge[i].flow -= d; edge[i ^ 1].flow += d;
@@ -57,7 +57,7 @@ struct MaxFlow {
         front = rear = 0;
         for (dis[que[rear++] = src] = 0; front < rear; ) {
             for (i = head[x = que[front++]]; ~i; i = edge[i].nxt) {
-                if (edge[i].flow && dis[y = edge[i].ed] == -1) {
+                if (edge[i ^ 1].flow && dis[y = edge[i].ed] == -1) {
                     dis[que[rear++] = y] = dis[x] + 1;
                     if (y == dst) return true;
                 }
@@ -68,15 +68,15 @@ struct MaxFlow {
     }
 
     F dinic(int src, int dst) {
-        F totalFlow = 0;
+        F totFlow = 0;
 
         if (src == dst) return INF;
-        while (bfs(src, dst)) {
+        while (bfs(dst, src)) {
             memcpy(cur, head, sizeof(head));
-            totalFlow += dfs(src, dst, INF);
+            totFlow += dfs(src, dst, INF);
         }
 
-        return totalFlow;
+        return totFlow;
     }
 };
 
