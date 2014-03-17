@@ -37,7 +37,7 @@ struct MinCostFlow {
         edge[nE] = Edge(b, a, head[b], 0, -c); head[b] = nE++;
     }
 
-    F dfs(int x, int dst, F pre) {
+    F aug(int x, int dst, F pre) {
         int i, y;
         F curFlow = pre, d;
 
@@ -45,7 +45,7 @@ struct MinCostFlow {
         for (vis[x] = true, i = cur[x]; ~i; i = edge[i].nxt) {
             if (edge[i].flow && !edge[i].cost && !vis[y = edge[i].v]) {
                 cur[x] = i;
-                d = dfs(y, dst, min(curFlow, edge[i].flow));
+                d = aug(y, dst, min(curFlow, edge[i].flow));
                 edge[i].flow -= d; edge[i ^ 1].flow += d;
                 if (!(curFlow -= d)) break;
             }
@@ -90,7 +90,7 @@ struct MinCostFlow {
             for ( ; ; totFlow += curFlow, netCost += d * curFlow) {
                 memcpy(cur, head, sizeof(head));
                 memset(vis, 0, sizeof(vis));
-                if (!(curFlow = dfs(src, dst, INF))) break;
+                if (!(curFlow = aug(src, dst, INF))) break;
             }
         }
 
