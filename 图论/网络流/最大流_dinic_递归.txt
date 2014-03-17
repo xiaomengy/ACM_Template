@@ -32,7 +32,7 @@ struct MaxFlow {
         edge[nE] = Edge(a, head[b], 0); head[b] = nE++;
     }
 
-    F dfs(int x, int dst, F pre) {
+    F aug(int x, int dst, F pre) {
         int i, y;
         F curFlow = pre, d;
 
@@ -40,7 +40,7 @@ struct MaxFlow {
         for (i = cur[x]; ~i; i = edge[i].nxt) {
             if (edge[i].flow && dis[y = edge[i].ed] == dis[x] - 1) {
                 cur[x] = i;
-                d = dfs(y, dst, min(curFlow, edge[i].flow));
+                d = aug(y, dst, min(curFlow, edge[i].flow));
                 edge[i].flow -= d; edge[i ^ 1].flow += d;
                 if (!(curFlow -= d)) break;
             }
@@ -73,7 +73,7 @@ struct MaxFlow {
         if (src == dst) return INF;
         while (bfs(dst, src)) {
             memcpy(cur, head, sizeof(head));
-            totFlow += dfs(src, dst, INF);
+            totFlow += aug(src, dst, INF);
         }
 
         return totFlow;
