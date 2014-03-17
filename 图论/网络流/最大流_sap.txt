@@ -73,7 +73,7 @@ struct MaxFlow {
     }
 
     F sap(int src, int dst) {
-        int totFlow = 0;
+        F totFlow = 0;
 
         if (!bfs(dst, src)) return 0;
         memcpy(cur, head, sizeof(cur));
