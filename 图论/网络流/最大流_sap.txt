@@ -20,8 +20,7 @@ struct MaxFlow {
     } edge[MAXE];
 
     int head[MAXV], nV, nE;
-    int dis[MAXV], pre[MAXV], arc[MAXV], cur[MAXV], cnt[MAXV];
-    F his[MAXV];
+    int dis[MAXV], cur[MAXV], gap[MAXV], que[MAXV], front, rear;
 
     void init(int v) {
         memset(head, -1, sizeof(head));
@@ -33,41 +32,52 @@ struct MaxFlow {
         edge[nE] = Edge(a, head[b], 0); head[b] = nE++;
     }
 
-    F sap(int src, int dst) {
-        int x, y, i, m;
-        F curFlow = INF, totFlow = 0;
-        bool flag;
+    bool bfs(int src, int dst) {
+        int i, x, y;
 
-        memset(dis, 0, sizeof(dis));
-        memset(cnt, 0, sizeof(cnt));
-        memcpy(cur, head, sizeof(cur));
-        for (cnt[0] = nV, x = src; dis[src] < nV; ) {
-            his[x] = curFlow; flag = false;
-            for (i = cur[x]; ~i; i = edge[i].nxt) {
-                if (edge[i].flow && dis[x] == dis[y = edge[i].ed] + 1) {
-                    flag = true; curFlow = min(curFlow, edge[i].flow);
-                    pre[y] = x; arc[y] = cur[x] = i;
-                    if ((x = y) == dst) {
-                        for (totFlow += curFlow; x != src; x = pre[x]) {
-                            edge[arc[x]].flow -= curFlow;
-                            edge[arc[x] ^ 1].flow += curFlow;
-                        }
-                        curFlow = INF;
-                    }
-                    break;
+        memset(dis, -1, sizeof(dis));
+        memset(gap, 0, sizeof(gap));
+        front = rear = 0;
+        for (dis[que[rear++] = src] = 0; front < rear; ) {
+            for (i = head[x = que[front++]]; ~i; i = edge[i].nxt) {
+                if (edge[i ^ 1].flow && dis[y = edge[i].ed] == -1) {
+                    ++gap[dis[y] = dis[x] + 1]; que[rear++] = y;
                 }
-            }
-            if (!flag) {
-                for (m = nV - 1, i = cur[x] = head[x]; ~i; i = edge[i].nxt) {
-                    if (edge[i].flow && dis[y = edge[i].ed] < m) {
-                        m = dis[y]; cur[x] = i;
-                    }
-                }
-                if (!(--cnt[dis[x]])) break;
-                ++cnt[dis[x] = m + 1];
-                if (x != src) curFlow = his[x = pre[x]];
             }
         }
+
+        return ~dis[dst];
+    }
+
+    F aug(int src, int dst, int x, F pre) {
+        int i, y, md = nV;
+        F curFlow = pre, d;
+
+        if (x == dst) return pre;
+        for (i = cur[x]; ~i; i = edge[i].nxt) {
+            if (edge[i].flow && dis[x] == dis[y = edge[i].ed] + 1) {
+                d = aug(src, dst, y, min(curFlow, edge[i].flow));
+                edge[i].flow -= d; edge[i ^ 1].flow += d; cur[x] = i;
+                if (!(curFlow -= d) || dis[src] >= nV) return pre - curFlow;
+            }
+        }
+        for (i = head[x]; ~i; i = edge[i].nxt) {
+            if (edge[i].flow && md > dis[y = edge[i].ed]) {
+                md = dis[y]; cur[x] = i;
+            }
+        }
+        if (!(--gap[dis[x]])) dis[src] = nV;
+        else ++gap[dis[x] = md + 1];
+
+        return pre - curFlow;
+    }
+
+    F sap(int src, int dst) {
+        int totFlow = 0;
+
+        if (!bfs(dst, src)) return 0;
+        memcpy(cur, head, sizeof(cur));
+        while (dis[src] < nV) totFlow += aug(src, dst, src, INF);
 
         return totFlow;
     }
