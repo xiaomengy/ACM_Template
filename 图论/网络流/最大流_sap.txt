@@ -33,7 +33,7 @@ struct MaxFlow {
         edge[nE] = Edge(b, a, head[b], 0); head[b] = nE++;
     }
 
-    void bfs(int src, int dst) {
+    void bfs(int src) {
         int i, x, y;
 
         memset(dis, 0x3F, sizeof(dis));
@@ -55,7 +55,7 @@ struct MaxFlow {
         bool tag;
 
         memcpy(cur, head, sizeof(cur));
-        for (bfs(dst, x = src); dis[src] < nV; ) {
+        for (bfs(dst), x = src; dis[src] < nV; ) {
             his[x] = curFlow; tag = false;
             for (i = cur[x]; ~i; i = edge[i].nxt) {
                 if (edge[i].flow && dis[x] == dis[y = edge[i].v] + 1) {
