@@ -14,16 +14,16 @@ using namespace std;
 template<typename F = int, typename C = int>
 struct MinCostFlow {
     struct Edge {
-        int ed, nxt;
+        int u, v, nxt;
         F flow;
         C cost;
         Edge() {}
-        Edge(int e, int n, int f, int c) :
-            ed(e), nxt(n), flow(f), cost(c) {}
+        Edge(int _u, int _v, int n, int f, int c) :
+            u(_u), v(_v), nxt(n), flow(f), cost(c) {}
     } edge[MAXE];
 
     int head[MAXV], nV, nE;
-    int pre[MAXV], now[MAXV], que[MAXV * MAXV * 2], front, rear;
+    int pre[MAXV], que[MAXV * MAXV * 2], front, rear;
     F his[MAXV];
     C dis[MAXV];
     bool vis[MAXV];
@@ -34,8 +34,8 @@ struct MinCostFlow {
     }
 
     void addEdge(int a, int b, F f, C c) {
-        edge[nE] = Edge(b, head[a], f,  c); head[a] = nE++;
-        edge[nE] = Edge(a, head[b], 0, -c); head[b] = nE++;
+        edge[nE] = Edge(a, b, head[a], f,  c); head[a] = nE++;
+        edge[nE] = Edge(b, a, head[b], 0, -c); head[b] = nE++;
     }
 
     F minCostFlow(int src, int dst, C &netCost, bool isFeasible = false) {
@@ -46,14 +46,12 @@ struct MinCostFlow {
             memset(dis, 0x3F, sizeof(dis));
             memset(vis, 0, sizeof(vis));
             front = rear = nV;
-            dis[src] = 0; his[src] = INF;
-            vis[que[rear++] = src] = true;
+            dis[src] = 0; his[src] = INF; vis[que[rear++] = src] = true;
             while (front < rear) {
-                vis[x = que[front++]] = false;
-                for (i = head[x]; ~i; i = edge[i].nxt) {
-                    if (edge[i].flow && dis[y = edge[i].ed] > dis[x] + edge[i].cost) {
+                for (vis[x = que[front++]] = false, i = head[x]; ~i; i = edge[i].nxt) {
+                    if (edge[i].flow && dis[y = edge[i].v] > dis[x] + edge[i].cost) {
                         dis[y] = dis[x] + edge[i].cost;
-                        pre[y] = x; now[y] = i; his[y] = min(his[x], edge[i].flow);
+                        pre[y] = i; his[y] = min(his[x], edge[i].flow);
                         if (!vis[y]) {
                             if (front < rear && dis[y] < dis[que[front]]) que[--front] = y;
                             else que[rear++] = y;
@@ -65,9 +63,9 @@ struct MinCostFlow {
             if (dis[dst] == INF) break;
             if (isFeasible && dis[dst] >= 0) break;
             totFlow += his[dst]; netCost += dis[dst] * his[dst];
-            for (i = dst; i != src; i = pre[i]) {
-                edge[now[i]].flow -= his[dst];
-                edge[now[i] ^ 1].flow += his[dst];
+            for (i = dst; i != src; i = edge[pre[i]].u) {
+                edge[pre[i]].flow -= his[dst];
+                edge[pre[i] ^ 1].flow += his[dst];
             }
         }
 
