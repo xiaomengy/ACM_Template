@@ -13,16 +13,16 @@
 using namespace std;
 
 template<typename F = int>
-struct MaxFlow {
+struct NetworkFlow {
     struct Edge {
-        int ed, nxt;
+        int u, v, nxt;
         F flow;
         Edge() {}
-        Edge(int e, int n, F f) : ed(e), nxt(n), flow(f) {}
+        Edge(int _u, int _v, int n, F f) : u(_u), v(_v), nxt(n), flow(f) {}
     } edge[MAXE];
 
     int head[MAXV], nV, nE;
-    int dis[MAXV], pre[MAXV], arc[MAXV], cur[MAXV], cnt[MAXV];
+    int dis[MAXV], pre[MAXV], cur[MAXV], cnt[MAXV], que[MAXV], front, rear;
     F his[MAXV], st[MAXV], ed[MAXV];
 
     void init(int v) {
@@ -33,56 +33,74 @@ struct MaxFlow {
     }
 
     void addEdge(int a, int b, F f) {
-        edge[nE] = Edge(b, head[a], f); head[a] = nE++;
-        edge[nE] = Edge(a, head[b], 0); head[b] = nE++;
+        edge[nE] = Edge(a, b, head[a], f); head[a] = nE++;
+        edge[nE] = Edge(b, a, head[b], 0); head[b] = nE++;
     }
 
-    void addFlow(int a, int b, int low, int high) {
+    void addFlow(int a, int b, F low, F high) {
         addEdge(a, b, high - low);
         st[a] += low; ed[b] += low;
+    }
+
+    bool bfs(int src, int dst) {
+        int i, x, y;
+
+        memset(dis, -1, sizeof(dis));
+        memset(cnt, 0, sizeof(cnt));
+        front = rear = 0;
+        ++cnt[dis[src] = 0]; que[rear++] = src;
+        while (front < rear) {
+            for (i = head[x = que[front++]]; ~i; i = edge[i].nxt) {
+                if (edge[i ^ 1].flow && dis[y = edge[i].v] == -1) {
+                    ++cnt[dis[y] = dis[x] + 1]; que[rear++] = y;
+                }
+            }
+        }
+
+        return ~dis[dst];
     }
 
     F sap(int src, int dst) {
         int x, y, i, m;
         F curFlow = INF, totFlow = 0;
-        bool flag;
+        bool tag;
 
-        memset(dis, 0, sizeof(dis));
-        memset(cnt, 0, sizeof(cnt));
+        if (!bfs(dst, src)) return 0;
         memcpy(cur, head, sizeof(cur));
-        for (cnt[0] = nV, x = src; dis[src] < nV; ) {
-            his[x] = curFlow; flag = false;
+        for (x = src; dis[src] < nV; ) {
+            his[x] = curFlow; tag = false;
             for (i = cur[x]; ~i; i = edge[i].nxt) {
-                if (edge[i].flow && dis[x] == dis[y = edge[i].ed] + 1) {
-                    flag = true; curFlow = min(curFlow, edge[i].flow);
-                    pre[y] = x; arc[y] = cur[x] = i;
+                if (edge[i].flow && dis[x] == dis[y = edge[i].v] + 1) {
+                    tag = true; pre[y] = cur[x] = i;
+                    curFlow = min(curFlow, edge[i].flow);
                     if ((x = y) == dst) {
-                        for (totFlow += curFlow; x != src; x = pre[x]) {
-                            edge[arc[x]].flow -= curFlow;
-                            edge[arc[x] ^ 1].flow += curFlow;
+                        for (totFlow += curFlow; x != src; x = edge[pre[x]].u) {
+                            edge[pre[x]].flow -= curFlow;
+                            edge[pre[x] ^ 1].flow += curFlow;
                         }
                         curFlow = INF;
                     }
                     break;
                 }
             }
-            if (!flag) {
-                for (m = nV - 1, i = cur[x] = head[x]; ~i; i = edge[i].nxt) {
-                    if (edge[i].flow && dis[y = edge[i].ed] < m) {
+            if (!tag) {
+                for (m = nV, i = head[x]; ~i; i = edge[i].nxt) {
+                    if (edge[i].flow && dis[y = edge[i].v] < m) {
                         m = dis[y]; cur[x] = i;
                     }
                 }
                 if (!(--cnt[dis[x]])) break;
                 ++cnt[dis[x] = m + 1];
-                if (x != src) curFlow = his[x = pre[x]];
+                if (x != src) curFlow = his[x = edge[pre[x]].u];
             }
         }
 
         return totFlow;
     }
 
-    int maxFlow(int src, int dst) {
-        int i, x = nV - 2, y = nV - 1, sum = 0;
+    F maxFlow(int src, int dst) {
+        int i, x = nV - 2, y = nV - 1;
+        F sum = 0;
 
         for (i = 0; i < nV - 2; ++i) {
             if (st[i]) addEdge(i, x, st[i]);
@@ -96,4 +114,4 @@ struct MaxFlow {
     }
 };
 
-MaxFlow<> graph;
+NetworkFlow<> graph;
