@@ -13,14 +13,15 @@ using namespace std;
 template<typename F = int>
 struct MaxFlow {
     struct Edge {
-        int ed, nxt;
+        int u, v, nxt;
         F flow;
         Edge() {}
-        Edge(int e, int n, F f) : ed(e), nxt(n), flow(f) {}
+        Edge(int _u, int _v, int n, F f) : u(_u), v(_v), nxt(n), flow(f) {}
     } edge[MAXE];
 
     int head[MAXV], nV, nE;
-    int dis[MAXV], cur[MAXV], gap[MAXV], que[MAXV], front, rear;
+    int dis[MAXV], pre[MAXV], cur[MAXV], cnt[MAXV], que[MAXV], front, rear;
+    F his[MAXV];
 
     void init(int v) {
         memset(head, -1, sizeof(head));
@@ -28,20 +29,21 @@ struct MaxFlow {
     }
 
     void addEdge(int a, int b, F f) {
-        edge[nE] = Edge(b, head[a], f); head[a] = nE++;
-        edge[nE] = Edge(a, head[b], 0); head[b] = nE++;
+        edge[nE] = Edge(a, b, head[a], f); head[a] = nE++;
+        edge[nE] = Edge(b, a, head[b], 0); head[b] = nE++;
     }
 
     bool bfs(int src, int dst) {
         int i, x, y;
 
         memset(dis, -1, sizeof(dis));
-        memset(gap, 0, sizeof(gap));
+        memset(cnt, 0, sizeof(cnt));
         front = rear = 0;
-        for (dis[que[rear++] = src] = 0; front < rear; ) {
+        ++cnt[dis[src] = 0]; que[rear++] = src;
+        while (front < rear) {
             for (i = head[x = que[front++]]; ~i; i = edge[i].nxt) {
-                if (edge[i ^ 1].flow && dis[y = edge[i].ed] == -1) {
-                    ++gap[dis[y] = dis[x] + 1]; que[rear++] = y;
+                if (edge[i ^ 1].flow && dis[y = edge[i].v] == -1) {
+                    ++cnt[dis[y] = dis[x] + 1]; que[rear++] = y;
                 }
             }
         }
@@ -49,35 +51,40 @@ struct MaxFlow {
         return ~dis[dst];
     }
 
-    F aug(int src, int dst, int x, F pre) {
-        int i, y, md = nV;
-        F curFlow = pre, d;
-
-        if (x == dst) return pre;
-        for (i = cur[x]; ~i; i = edge[i].nxt) {
-            if (edge[i].flow && dis[x] == dis[y = edge[i].ed] + 1) {
-                d = aug(src, dst, y, min(curFlow, edge[i].flow));
-                edge[i].flow -= d; edge[i ^ 1].flow += d; cur[x] = i;
-                if (!(curFlow -= d) || dis[src] >= nV) return pre - curFlow;
-            }
-        }
-        for (i = head[x]; ~i; i = edge[i].nxt) {
-            if (edge[i].flow && md > dis[y = edge[i].ed]) {
-                md = dis[y]; cur[x] = i;
-            }
-        }
-        if (!(--gap[dis[x]])) dis[src] = nV;
-        else ++gap[dis[x] = md + 1];
-
-        return pre - curFlow;
-    }
-
     F sap(int src, int dst) {
-        F totFlow = 0;
+        int x, y, i, m;
+        F curFlow = INF, totFlow = 0;
+        bool tag;
 
         if (!bfs(dst, src)) return 0;
         memcpy(cur, head, sizeof(cur));
-        while (dis[src] < nV) totFlow += aug(src, dst, src, INF);
+        for (x = src; dis[src] < nV; ) {
+            his[x] = curFlow; tag = false;
+            for (i = cur[x]; ~i; i = edge[i].nxt) {
+                if (edge[i].flow && dis[x] == dis[y = edge[i].v] + 1) {
+                    tag = true; pre[y] = cur[x] = i;
+                    curFlow = min(curFlow, edge[i].flow);
+                    if ((x = y) == dst) {
+                        for (totFlow += curFlow; x != src; x = edge[pre[x]].u) {
+                            edge[pre[x]].flow -= curFlow;
+                            edge[pre[x] ^ 1].flow += curFlow;
+                        }
+                        curFlow = INF;
+                    }
+                    break;
+                }
+            }
+            if (!tag) {
+                for (m = nV, i = head[x]; ~i; i = edge[i].nxt) {
+                    if (edge[i].flow && dis[y = edge[i].v] < m) {
+                        m = dis[y]; cur[x] = i;
+                    }
+                }
+                if (!(--cnt[dis[x]])) break;
+                ++cnt[dis[x] = m + 1];
+                if (x != src) curFlow = his[x = edge[pre[x]].u];
+            }
+        }
 
         return totFlow;
     }

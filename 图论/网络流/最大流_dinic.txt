@@ -13,10 +13,10 @@ using namespace std;
 template<typename F = int>
 struct MaxFlow {
     struct Edge {
-        int ed, nxt;
+        int u, v, nxt;
         F flow;
         Edge() {}
-        Edge(int e, int n, F f) : ed(e), nxt(n), flow(f) {}
+        Edge(int _u, int _v, int n, F f) : u(_u), v(_v), nxt(n), flow(f) {}
     } edge[MAXE];
 
     int head[MAXV], nV, nE;
@@ -28,26 +28,8 @@ struct MaxFlow {
     }
 
     void addEdge(int a, int b, F f) {
-        edge[nE] = Edge(b, head[a], f); head[a] = nE++;
-        edge[nE] = Edge(a, head[b], 0); head[b] = nE++;
-    }
-
-    F aug(int x, int dst, F pre) {
-        int i, y;
-        F curFlow = pre, d;
-
-        if (x == dst) return pre;
-        for (i = cur[x]; ~i; i = edge[i].nxt) {
-            if (edge[i].flow && dis[y = edge[i].ed] == dis[x] - 1) {
-                cur[x] = i;
-                d = aug(y, dst, min(curFlow, edge[i].flow));
-                edge[i].flow -= d; edge[i ^ 1].flow += d;
-                if (!(curFlow -= d)) break;
-            }
-        }
-        if (curFlow) dis[x] = -1;
-
-        return pre - curFlow;
+        edge[nE] = Edge(a, b, head[a], f); head[a] = nE++;
+        edge[nE] = Edge(b, a, head[b], 0); head[b] = nE++;
     }
 
     bool bfs(int src, int dst) {
@@ -57,7 +39,7 @@ struct MaxFlow {
         front = rear = 0;
         for (dis[que[rear++] = src] = 0; front < rear; ) {
             for (i = head[x = que[front++]]; ~i; i = edge[i].nxt) {
-                if (edge[i ^ 1].flow && dis[y = edge[i].ed] == -1) {
+                if (edge[i ^ 1].flow && dis[y = edge[i].v] == -1) {
                     dis[que[rear++] = y] = dis[x] + 1;
                     if (y == dst) return true;
                 }
@@ -65,6 +47,23 @@ struct MaxFlow {
         }
 
         return false;
+    }
+
+    F aug(int x, int dst, F pre) {
+        int i, y;
+        F curFlow = pre, d;
+
+        if (x == dst) return pre;
+        for (i = cur[x]; ~i; i = edge[i].nxt) {
+            if (edge[i].flow && dis[y = edge[i].v] == dis[x] - 1) {
+                cur[x] = i; d = aug(y, dst, min(curFlow, edge[i].flow));
+                edge[i].flow -= d; edge[i ^ 1].flow += d;
+                if (!(curFlow -= d)) break;
+            }
+        }
+        if (curFlow) dis[x] = -1;
+
+        return pre - curFlow;
     }
 
     F dinic(int src, int dst) {
