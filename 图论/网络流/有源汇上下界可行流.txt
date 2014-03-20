@@ -42,22 +42,20 @@ struct NetworkFlow {
         st[a] += low; ed[b] += low;
     }
 
-    bool bfs(int src, int dst) {
+    void bfs(int src) {
         int i, x, y;
 
-        memset(dis, -1, sizeof(dis));
+        memset(dis, 0x3F, sizeof(dis));
         memset(cnt, 0, sizeof(cnt));
         front = rear = 0;
         ++cnt[dis[src] = 0]; que[rear++] = src;
         while (front < rear) {
             for (i = head[x = que[front++]]; ~i; i = edge[i].nxt) {
-                if (edge[i ^ 1].flow && dis[y = edge[i].v] == -1) {
+                if (edge[i ^ 1].flow && dis[y = edge[i].v] > dis[x] + 1) {
                     ++cnt[dis[y] = dis[x] + 1]; que[rear++] = y;
                 }
             }
         }
-
-        return ~dis[dst];
     }
 
     F sap(int src, int dst) {
@@ -65,9 +63,8 @@ struct NetworkFlow {
         F curFlow = INF, totFlow = 0;
         bool tag;
 
-        if (!bfs(dst, src)) return 0;
         memcpy(cur, head, sizeof(cur));
-        for (x = src; dis[src] < nV; ) {
+        for (bfs(dst), x = src; dis[src] < nV; ) {
             his[x] = curFlow; tag = false;
             for (i = cur[x]; ~i; i = edge[i].nxt) {
                 if (edge[i].flow && dis[x] == dis[y = edge[i].v] + 1) {
