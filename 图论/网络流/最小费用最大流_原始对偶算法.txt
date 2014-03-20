@@ -37,6 +37,29 @@ struct MinCostFlow {
         edge[nE] = Edge(b, a, head[b], 0, -c); head[b] = nE++;
     }
 
+    bool spfa(int src, int dst) {
+        int i, x, y;
+
+        memset(dis, 0x3F, sizeof(dis));
+        memset(vis, 0, sizeof(vis));
+        front = rear = nV;
+        dis[src] = 0; vis[que[rear++] = src] = true;
+        while (front < rear) {
+            for (vis[x = que[front++]] = false, i = head[x]; ~i; i = edge[i].nxt) {
+                if (edge[i ^ 1].flow && dis[y = edge[i].v] > dis[x] - edge[i].cost) {
+                    dis[y] = dis[x] - edge[i].cost;
+                    if (!vis[y]) {
+                        if (front < rear && dis[y] < dis[que[front]]) que[--front] = y;
+                        else que[rear++] = y;
+                        vis[y] = true;
+                    }
+                }
+            }
+        }
+
+        return dis[dst] < INF;
+    }
+
     F aug(int x, int dst, F pre) {
         int i, y;
         F curFlow = pre, d;
@@ -53,30 +76,6 @@ struct MinCostFlow {
         if (!curFlow) vis[x] = false;
 
         return pre - curFlow;
-    }
-
-    bool spfa(int src, int dst) {
-        int i, x, y;
-
-        memset(dis, 0x3F, sizeof(dis));
-        memset(vis, 0, sizeof(vis));
-        front = rear = nV;
-        dis[src] = 0; vis[que[rear++] = src] = true;
-        while (front < rear) {
-            vis[x = que[front++]] = false;
-            for (i = head[x]; ~i; i = edge[i].nxt) {
-                if (edge[i ^ 1].flow && dis[y = edge[i].v] > dis[x] - edge[i].cost) {
-                    dis[y] = dis[x] - edge[i].cost;
-                    if (!vis[y]) {
-                        if (front < rear && dis[y] < dis[que[front]]) que[--front] = y;
-                        else que[rear++] = y;
-                        vis[y] = true;
-                    }
-                }
-            }
-        }
-
-        return dis[dst] < INF;
     }
 
     F minCostFlow(int src, int dst, C &netCost, bool isFeasible = false) {
