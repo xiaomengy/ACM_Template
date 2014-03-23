@@ -1,0 +1,68 @@
+// 树状数组模板，lowerBound 与 upperBound 无解返回 -1
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <functional>
+
+#define MAX 0x100000
+#define LB(x) ((x) & -(x))
+
+using namespace std;
+
+template< typename T, typename C = less<T> >
+struct BIT {
+    T c[MAX];
+    int sz, up;
+
+    void init(int n) {
+        memset(c, 0, sizeof(c));
+        for (sz = n, up = 1; up <= n; up <<= 1);
+    }
+
+    int size() const { return sz; }
+
+    void update(int k, const T &v) {
+        for ( ; k <= up; k += LB(k)) c[k] += v;
+    }
+
+    T query(int k) const {
+        T ret = 0;
+        for ( ; k; k -= LB(k)) ret += c[k];
+        return ret;
+    }
+
+    int lowerBound(const T &x) const {
+        T cur = 0;
+        C cmp;
+        int low = 1, high = up, mid, ret = -1;
+
+        while (low < high) {
+            mid = (low + high) >> 1;
+            if (cmp(cur + c[mid], x)) {
+                cur += c[mid]; low = mid + 1;
+            } else {
+                ret = high = mid;
+            }
+        }
+
+        return min(ret, sz);
+    }
+
+    int upperBound(const T &x) const {
+        T cur = 0;
+        C cmp;
+        int low = 1, high = up, mid, ret = -1;
+
+        while (low < high) {
+            mid = (low + high) >> 1;
+            if (cmp(x, cur + c[mid])) {
+                ret = high = mid;
+            } else {
+                cur += c[mid]; low = mid + 1;
+            }
+        }
+
+        return min(ret, sz);
+    }
+};
