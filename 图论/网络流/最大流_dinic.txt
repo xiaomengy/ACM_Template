@@ -5,7 +5,7 @@
 #include <cstring>
 
 #define MAXV 2048
-#define MAXE 1000010
+#define MAXE 100010
 #define INF 0x3F3F3F3F
 
 using namespace std;
