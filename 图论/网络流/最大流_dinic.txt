@@ -62,7 +62,7 @@ struct MaxFlow {
                 if (!(curFlow -= d)) break;
             }
         }
-        if (curFlow) dis[x] = nV + 1;
+        if (curFlow) dis[x] = nV;
 
         return pre - curFlow;
     }
