@@ -4,10 +4,12 @@
 #include <iostream>
 #include <cstdio>
 #include <cstring>
+#include <algorithm>
 
 #define MAXV 1024
 #define MAXE 100010
-#define INF 0x3F3F3F3F
+#define F_INF 0x3F3F3F3F
+#define C_INF 0x3F3F3F3F
 
 using namespace std;
 
@@ -18,7 +20,7 @@ struct MinCostFlow {
         F flow;
         C cost;
         Edge() {}
-        Edge(int _u, int _v, int n, int f, int c) :
+        Edge(int _u, int _v, int n, const F &f, const C &c) :
             u(_u), v(_v), nxt(n), flow(f), cost(c) {}
     } edge[MAXE];
 
@@ -32,7 +34,7 @@ struct MinCostFlow {
         nV = v; nE = 0;
     }
 
-    void addEdge(int a, int b, F f, C c) {
+    void addEdge(int a, int b, const F &f, const C &c) {
         edge[nE] = Edge(a, b, head[a], f,  c); head[a] = nE++;
         edge[nE] = Edge(b, a, head[b], 0, -c); head[b] = nE++;
     }
@@ -40,7 +42,7 @@ struct MinCostFlow {
     bool spfa(int src, int dst) {
         int i, x, y;
 
-        memset(dis, 0x3F, sizeof(dis));
+        fill(dis, dis + nV, C_INF);
         memset(vis, 0, sizeof(vis));
         front = rear = nV;
         dis[src] = 0; vis[que[rear++] = src] = true;
@@ -57,10 +59,10 @@ struct MinCostFlow {
             }
         }
 
-        return dis[dst] < INF;
+        return dis[dst] < C_INF;
     }
 
-    F aug(int x, int dst, F pre) {
+    F aug(int x, int dst, const F &pre) {
         int i, y;
         F curFlow = pre, d;
 
@@ -89,7 +91,7 @@ struct MinCostFlow {
             for ( ; ; totFlow += curFlow, netCost += d * curFlow) {
                 memcpy(cur, head, sizeof(head));
                 memset(vis, 0, sizeof(vis));
-                if (!(curFlow = aug(src, dst, INF))) break;
+                if (!(curFlow = aug(src, dst, F_INF))) break;
             }
         }
 
