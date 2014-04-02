@@ -14,44 +14,45 @@ typedef long long i64;
 template<typename T>
 struct Matrix {
     T mat[MAX][MAX];
-    static int n, p;
+    static int sz, mod;
 
     Matrix() {}
     Matrix(const T &x) {
         int i;
         memset(mat, 0, sizeof(mat));
-        for (i = 0; i < n; ++i) mat[i][i] = x;
+        for (i = 0; i < sz; ++i) mat[i][i] = x;
     }
 
-    static void resize(int _n) { n = _n; }
-    static void setMod(int _p) { p = _p; }
+    static int size() { return sz; }
+    static void resize(int n) { sz = n; }
+    static void setMod(int p) { mod = p; }
 
     T *operator [](int k) { return mat[k]; }
 
-    Matrix<T> operator *(const Matrix<T> &o) const {
+    Matrix operator *(const Matrix &o) const {
         Matrix ret(0);
         int i, j, k;
-        for (i = 0; i < n; ++i) {
-            for (k = 0; k < n; ++k) {
+        for (i = 0; i < sz; ++i) {
+            for (k = 0; k < sz; ++k) {
                 if (!mat[i][k]) continue;
-                for (j = 0; j < n; ++j) {
+                for (j = 0; j < sz; ++j) {
                     ret.mat[i][j] += mat[i][k] * o.mat[k][j];
-                    if (~p) ret.mat[i][j] %= p;
+                    if (~mod) ret.mat[i][j] %= mod;
                 }
             }
         }
         return ret;
     }
 
-    Matrix<T> pow(i64 x) const {
-        Matrix<T> ret(1), a = *this;
-        for ( ; x; x >>= 1) {
-            if (x & 1) ret = ret * a;
+    Matrix pow(i64 n) const {
+        Matrix ret(1), a = *this;
+        for ( ; n; n >>= 1) {
+            if (n & 1) ret = ret * a;
             a = a * a;
         }
         return ret;
     }
 };
 
-template<typename T> int Matrix<T>::n = 0;
-template<typename T> int Matrix<T>::p = -1;
+template<typename T> int Matrix<T>::sz = 0;
+template<typename T> int Matrix<T>::mod = -1;
