@@ -1,0 +1,69 @@
+// 多项式快速幂模板
+// 对于线性递推关系，可以求出转移矩阵 A 特征多项式 p(x)，然后只需要求 (A^n % p(A))x 即可，复杂度 O(k^2logn)
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+
+#define MAX 256
+#define MOD 1000000007
+
+using namespace std;
+
+typedef long long i64;
+
+template<typename T>
+struct Polynomial {
+    T v[MAX];
+    int sz;
+    static int mod;
+
+    Polynomial() : sz(0) {}
+    Polynomial(int n, const T &x = 0) : sz(n) { fill(v, v + n, x); }
+
+    static void setMod(int p) { mod = p; }
+
+    int size() const { return sz; }
+    void resize(int n) { sz = n; }
+
+    T &operator [](int k) { return v[k]; }
+
+    Polynomial operator *(const Polynomial &o) const {
+        Polynomial ret(sz + o.sz - 1);
+        int i, j;
+        for (i = 0; i < sz; ++i) {
+            if (!v[i]) continue;
+            for (j = 0; j < o.sz; ++j) {
+                ret.v[i + j] += v[i] * o.v[j];
+                if (~mod) ret.v[i + j] %= mod;
+            }
+        }
+        return ret;
+    }
+
+    Polynomial operator %(const Polynomial &o) const {
+        Polynomial ret = *this;
+        int i, j, n = o.size() - 1;
+        for (i = sz - 1; i >= n; --i) {
+            if (!ret.v[i]) continue;
+            for (j = 1; j <= n; ++j) {
+                ret.v[i - j] -= ret.v[i] * o.v[n - j];
+                if (~mod && (ret.v[i - j] %= mod) < 0) ret.v[i - j] += mod;
+            }
+        }
+        ret.sz = min(ret.sz, n);
+        return ret;
+    }
+
+    Polynomial pow(i64 n, const Polynomial &p) const {
+        Polynomial ret(1, 1), a = *this;
+        for ( ; n; n >>= 1) {
+            if (n & 1) ret = (ret * a) % p;
+            a = (a * a) % p;
+        }
+        return ret;
+    }
+};
+
+template<typename T> int Polynomial<T>::mod = -1;
