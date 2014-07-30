@@ -1,0 +1,66 @@
+// 可持久化线段树维护查询区间第k大数，无修改操作
+// 区间第k大表示从小到大排列第k个
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+#define MAX 100010
+#define AVG(x, y) (((x) & (y)) + (((x) ^ (y)) >> 1))
+
+using namespace std;
+
+template<typename T>
+struct SegTree {
+    struct Node {
+        T sum;
+        Node *lc, *rc;
+    } v[MAX * 20], *rt[MAX];
+
+    int sz, tot;
+
+    void pushUp(Node *x) { x->sum = x->lc->sum + x->rc->sum; }
+
+    void _build(Node *&x, int l, int r) {
+        int mid = AVG(l, r);
+        x = v + tot++; x->sum = 0;
+        if (l == r) return;
+        _build(x->lc, l, mid);
+        _build(x->rc, mid + 1, r);
+    }
+
+    void _update(Node *&x, const Node *y, int l, int r, int key, const T &val) {
+        int mid = AVG(l, r);
+        x = v + tot++; *x = *y;
+        if (l == r) {
+            x->sum += val;
+            return;
+        }
+        if (key <= mid) _update(x->lc, y->lc, l, mid, key, val);
+        else _update(x->rc, y->rc, mid + 1, r, key, val);
+        pushUp(x);
+    }
+
+    int _query(const Node *x, const Node *y, int l, int r, const T &k) {
+        int mid = AVG(l, r);
+        if (l == r) return l;
+        T m = x->lc->sum - y->lc->sum;
+        if (k <= m) return _query(x->lc, y->lc, l, mid, k);
+        else return _query(x->rc, y->rc, mid + 1, r, k - m);
+    }
+
+    void build(int n) {
+        sz = n; tot = 0;
+        _build(rt[0], 0, sz - 1);
+    }
+
+    void update(int cur, int pre, int key, const T &val) {
+        _update(rt[cur], rt[pre], 0, sz - 1, key, val);
+    }
+
+    int query(int l, int r, const T &k) {
+        return _query(rt[r], rt[l - 1], 0, sz - 1, k);
+    }
+};
+
+SegTree<int> st;
