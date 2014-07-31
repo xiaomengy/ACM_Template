@@ -1,4 +1,4 @@
-// RMQ-ST�㷨,���Զ���Ƚϱ�׼ O(nlogn) - O(1)
+﻿// RMQ-ST算法,需自定义比较标准 O(nlogn) - O(1)
 
 #include <iostream>
 #include <cstdio>
