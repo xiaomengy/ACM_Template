@@ -28,6 +28,7 @@ struct Matrix {
     static void setMod(int p) { mod = p; }
 
     T *operator [](int k) { return mat[k]; }
+    const T *operator [](int k) const { return mat[k]; }
 
     Matrix operator *(const Matrix &o) const {
         Matrix ret(0);
