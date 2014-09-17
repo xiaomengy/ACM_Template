@@ -6,7 +6,7 @@
 #include <cstring>
 #include <algorithm>
 
-#define MAX 16
+#define MAX 256
 #define MOD 1000000007
 
 using namespace std;
