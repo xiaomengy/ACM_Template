@@ -6,7 +6,7 @@
 #include <cstring>
 #include <algorithm>
 
-#define MAX 256
+#define MAX 16
 #define MOD 1000000007
 
 using namespace std;
@@ -28,6 +28,7 @@ struct Polynomial {
     void resize(int n) { sz = n; }
 
     T &operator [](int k) { return v[k]; }
+    const T &operator [](int k) const { return v[k]; }
 
     Polynomial operator *(const Polynomial &o) const {
         Polynomial ret(sz + o.sz - 1);
