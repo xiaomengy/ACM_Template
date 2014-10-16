@@ -101,7 +101,7 @@ struct NetworkFlow {
 
     F maxFlow(int src, int dst) {
         int i, x = nV - 2, y = nV - 1;
-        F sum = 0;
+        F sum = 0, curFlow;
 
         for (i = 0; i < nV - 2; ++i) {
             if (st[i]) addEdge(i, x, st[i]);
@@ -110,8 +110,9 @@ struct NetworkFlow {
         }
         addEdge(dst, src, INF);
         if (sap(y, x) < sum) return -1;
+        curFlow = edge[nE - 1].flow; edge[nE - 1].flow = 0;
 
-        return edge[nE - 1].flow + sap(src, dst);
+        return curFlow + sap(src, dst);
     }
 };
 
