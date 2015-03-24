@@ -1,0 +1,82 @@
+// Palindorm 由给定字符串回文构成
+// RT0 表示长度为偶数回文根节点，RT1表示长度为奇数回文根节点
+// cnt 记录此节点回文字串个数，size 表示不同回文字串个数＋2
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+
+using namespace std;
+
+constexpr int MAXC = 8;
+constexpr int MAXN = 100010;
+
+template<typename T, typename HashFunc>
+struct PalindromicTree {
+	struct Node {
+		int nxt[MAXC], fail, len, cnt;
+		Node() : fail{-1}, len{0}, cnt{0} {
+			memset(nxt, -1, sizeof(nxt));
+		}
+	} q[MAXN];
+
+	T str[MAXN];
+	int last, sz; 
+	HashFunc chidx;
+	static constexpr int RT0 = 0, RT1 = 1;
+
+	const Node& operator [](int k) const { return q[k]; }
+	Node& operator [](int k) { return q[k]; }
+
+	int size() const { return sz; };
+
+	void clear() {
+		fill(q, q + MAXN, Node{});
+		q[0].fail = 1; q[0].len =  0;
+		q[1].fail = 1; q[1].len = -1;
+		last = 1; sz = 2;
+	}
+
+	void extend(int k) {
+		int v = chidx(str[k]), cur = last;
+		for ( ; ; cur = q[cur].fail) {
+			int w = q[cur].len;
+			if (k - 1 - w >= 0 && str[k - 1 - w] == str[k]) break;
+		}
+		if (~q[cur].nxt[v]) {
+			last = q[cur].nxt[v]; ++q[last].cnt;
+			return;
+		}
+		last = sz++;
+		q[last].len = q[cur].len + 2; q[last].cnt = 1; q[cur].nxt[v] = last;
+		if (q[last].len == 1) q[last].fail = 0;
+		else {
+			for (cur = q[cur].fail; ; cur = q[cur].fail) {
+				int w = q[cur].len;
+				if (k - 1 - w >= 0 && str[k - 1 - w] == str[k]) {
+					q[last].fail = q[cur].nxt[v];
+					break;
+				}
+			}
+		}
+	}
+
+	void build(const T* s, int n) {
+		clear();
+		copy_n(s, n, str);
+		for (int i = 0; i < n; ++i) extend(i);
+	}
+
+	void count() {
+		for (int i = sz - 1; i > 1; --i) {
+			if (q[i].fail > 1) q[q[i].fail].cnt += q[i].cnt;
+		}
+	}
+};
+
+struct HashFunc {
+	int operator ()(char ch) { return ch - 'a'; }
+};
+
+PalindromicTree<char, HashFunc> ptr;
